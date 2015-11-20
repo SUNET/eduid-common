@@ -34,6 +34,40 @@ from bson import ObjectId
 import vccs_client
 
 
+class FakeVCCSClient(vccs_client.VCCSClient):
+
+    def __init__(self, fake_response=None):
+        self.fake_response = fake_response
+
+    def _execute_request_response(self, _service, _values):
+        if self.fake_response is not None:
+            return json.dumps(self.fake_response)
+
+        fake_response = {}
+        if _service == 'add_creds':
+            fake_response = {
+                'add_creds_response': {
+                    'version': 1,
+                    'success': True,
+                },
+            }
+        elif _service == 'authenticate':
+            fake_response = {
+                'auth_response': {
+                    'version': 1,
+                    'authenticated': True,
+                },
+            }
+        elif _service == 'revoke_creds':
+            fake_response = {
+                'revoke_creds_response': {
+                    'version': 1,
+                    'success': True,
+                },
+            }
+        return json.dumps(fake_response)
+
+
 class TestVCCSClient(object):
     '''
     Mock VCCS client for testing. It stores credentials locally,
