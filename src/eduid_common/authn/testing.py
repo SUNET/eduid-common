@@ -30,6 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+import json
+
 from bson import ObjectId
 import vccs_client
 
