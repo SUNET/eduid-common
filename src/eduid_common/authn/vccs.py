@@ -30,15 +30,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-import json
-
 from datetime import datetime
 from bson import ObjectId
 
 import vccs_client
 
 import logging
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def get_vccs_client(vccs_url):
@@ -89,11 +87,11 @@ def check_password(vccs_url, password, user, vccs=None):
                     password_dict['user_id_hint'] = user_id
                     return password_dict
         except Exception as e:
-            log.info('Password check failed due to exception:  ' + str(e))
+            logger.info('Password check failed due to exception:  ' + str(e))
     return False
 
 
-def add_credentials(vccs_url, old_password, new_password, user):
+def add_credentials(vccs_url, old_password, new_password, user, vccs=None):
     """
     Add a new password to a user. Revokes the old one, if one is given.
 
@@ -110,7 +108,8 @@ def add_credentials(vccs_url, old_password, new_password, user):
     :rtype: bool
     """
     password_id = ObjectId()
-    vccs = get_vccs_client(vccs_url)
+    if vccs is None:
+        vccs = get_vccs_client(vccs_url)
     new_factor = vccs_client.VCCSPasswordFactor(new_password,
                                                 credential_id=str(password_id))
 
@@ -121,29 +120,30 @@ def add_credentials(vccs_url, old_password, new_password, user):
     old_password_supplied = bool(old_password)
     if passwords and old_password:
         # Find the old credential to revoke
-        old_password = check_password(vccs_url, old_password, user, vccs=vccs)
-        if not old_password:
+        checked_password = check_password(vccs_url, old_password, user, vccs=vccs)
+        del old_password # don't need it anymore, try to forget it
+        if not checked_password:
             return False
         old_factor = vccs_client.VCCSRevokeFactor(
-            str(old_password['id']),
+            str(checked_password['id']),
             'changing password',
             reference='action.chpasswd',
         )
 
     if not vccs.add_credentials(str(user.get_id()), [new_factor]):
-        log.warning("Failed adding password credential "
+        logger.warning("Failed adding password credential "
                     "{!r} for user {!r}".format(
                         new_factor.credential_id, user.get_id()))
         return False  # something failed
-    log.debug("Added password credential {!s} for user {!s}".format(
+    logger.debug("Added password credential {!s} for user {!s}".format(
         new_factor.credential_id, user.get_id()))
 
     if old_factor:
         # Use the user_id_hint inserted by check_password() until we know all
         # credentials use str(user['_id']) as user_id.
-        vccs.revoke_credentials(old_password['user_id_hint'], [old_factor])
+        vccs.revoke_credentials(checked_password['user_id_hint'], [old_factor])
         passwords = [x for x in passwords if x['id'] != checked_password['id']]
-        log.debug("Revoked old credential {!s} (user {!s})".format(
+        logger.debug("Revoked old credential {!s} (user {!s})".format(
             old_factor.credential_id, user.get_id()))
 
     elif not old_password_supplied:
@@ -153,7 +153,7 @@ def add_credentials(vccs_url, old_password, new_password, user):
             revoked.append(vccs_client.VCCSRevokeFactor(str(password['id']),
                                                         'reset password',
                                                         reference='action.chpasswd'))
-            log.debug("Revoked old credential (password reset) "
+            logger.debug("Revoked old credential (password reset) "
                       "{!s} (user {!s})".format(
                           password['id'], user.get_id()))
         if revoked:
@@ -177,8 +177,9 @@ def add_credentials(vccs_url, old_password, new_password, user):
     return True
 
 
-def revoke_all_credentials(vccs_url, user):
-    vccs = get_vccs_client(vccs_url)
+def revoke_all_credentials(vccs_url, user, vccs=None):
+    if vccs is None:
+        vccs = get_vccs_client(vccs_url)
     passwords = user.get_passwords()
     to_revoke = []
     for passwd_dict in passwords:
@@ -188,7 +189,7 @@ def revoke_all_credentials(vccs_url, user):
             'subscriber requested termination',
             reference='dashboard'
         )
-        log.debug("Revoked old credential (account termination)"
+        logger.debug("Revoked old credential (account termination)"
                   " {!s} (user {!s})".format(
                       credential_id, user.get_id()))
         to_revoke.append(factor)

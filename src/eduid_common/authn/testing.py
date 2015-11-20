@@ -30,6 +30,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from bson import ObjectId
+import vccs_client
+
 
 class TestVCCSClient(object):
     '''
