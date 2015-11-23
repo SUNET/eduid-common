@@ -91,7 +91,8 @@ def check_password(vccs_url, password, user, vccs=None):
     return False
 
 
-def add_credentials(vccs_url, old_password, new_password, user, vccs=None):
+def add_credentials(vccs_url, old_password, new_password,
+                    user, source='dashboard', vccs=None):
     """
     Add a new password to a user. Revokes the old one, if one is given.
 
@@ -169,7 +170,7 @@ def add_credentials(vccs_url, old_password, new_password, user, vccs=None):
     passwords.append({
         'id': password_id,
         'salt': new_factor.salt,
-        'source': 'dashboard',
+        'source': source,
         'created_ts': datetime.now(),
     })
     user.set_passwords(passwords)
