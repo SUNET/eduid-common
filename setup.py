@@ -5,9 +5,9 @@ import os
 version = '0.1.0'
 
 requires = [
-    'setuptools==18.5',
-    'pwgen==0.4',
-    'eduid-userdb>=0.0.4b6',
+    'setuptools>=2.2',
+    'pwgen>=0.4',
+    'eduid-userdb>=0.0.5',
     'vccs_client>=0.4.1',
 ]
 
