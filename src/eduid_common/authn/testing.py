@@ -34,6 +34,8 @@ import json
 
 from bson import ObjectId
 import vccs_client
+from eduid_userdb import Password
+from eduid_userdb.dashboard import DashboardLegacyUser, DashboardUser
 
 
 class FakeVCCSClient(vccs_client.VCCSClient):
@@ -127,7 +129,8 @@ def get_vccs_client(vccs_url):
     )
 
 
-def provision_credentials(vccs_url, new_password, user, source='dashboard'):
+def provision_credentials(vccs_url, new_password, user,
+                          vccs=None, source='dashboard'):
     """
     This function should be used by tests only
     Provision new password to a user.
@@ -143,7 +146,12 @@ def provision_credentials(vccs_url, new_password, user, source='dashboard'):
     :rtype: bool
     """
     password_id = ObjectId()
-    vccs = get_vccs_client(vccs_url)
+    if vccs is None:
+        vccs = get_vccs_client(vccs_url)
+    # upgrade DashboardLegacyUser to DashboardUser
+    if isinstance(user, DashboardLegacyUser):
+        user = DashboardUser(data=user._mongo_doc)
+
     new_factor = vccs_client.VCCSPasswordFactor(new_password,
                                                 credential_id=str(password_id))
 
@@ -156,4 +164,4 @@ def provision_credentials(vccs_url, new_password, user, source='dashboard'):
                             )
     user.passwords.add(new_password)
 
-    return True
+    return user

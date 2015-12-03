@@ -87,7 +87,7 @@ def check_password(vccs_url, password, user, vccs=None):
             if vccs.authenticate(str(user.user_id), [factor]):
                 return cred
         except Exception as exc:
-            log.warning("VCCS authentication threw exception: {!s}".format(exc))
+            logger.warning("VCCS authentication threw exception: {!s}".format(exc))
     return False
 
 
@@ -175,7 +175,7 @@ def add_credentials(vccs_url, old_password, new_password,
                             )
     user.passwords.add(new_password)
 
-    return True
+    return user
 
 
 def revoke_all_credentials(vccs_url, user, source='dashboard', vccs=None):
