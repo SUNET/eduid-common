@@ -127,7 +127,7 @@ def get_vccs_client(vccs_url):
     )
 
 
-def provision_credentials(vccs_url, new_password, user):
+def provision_credentials(vccs_url, new_password, user, source='dashboard'):
     """
     This function should be used by tests only
     Provision new password to a user.
@@ -147,15 +147,13 @@ def provision_credentials(vccs_url, new_password, user):
     new_factor = vccs_client.VCCSPasswordFactor(new_password,
                                                 credential_id=str(password_id))
 
-    passwords = user.get_passwords()
-
-    if not vccs.add_credentials(str(user.get_id()), [new_factor]):
+    if not vccs.add_credentials(str(user.user_id), [new_factor]):
         return False  # something failed
 
-    passwords.append({
-        'id': password_id,
-        'salt': new_factor.salt,
-    })
-    user.set_passwords(passwords)
+    new_password = Password(credential_id = password_id,
+                            salt = new_factor.salt,
+                            application = source,
+                            )
+    user.passwords.add(new_password)
 
     return True
