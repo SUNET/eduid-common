@@ -49,7 +49,7 @@ class VCCSTestCase(MongoTestCase):
 
     def tearDown(self):
         MongoTestCase.tearDown(self)
-        vccs_module.revoke_all_credentials('dummy', self.user, self.vccs_client)
+        vccs_module.revoke_all_credentials('dummy', self.user, vccs=self.vccs_client)
 
     def _check_credentials(self, creds):
         return vccs_module.check_password('dummy', creds, self.user,
