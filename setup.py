@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 
-version = '0.0.1'
+version = '0.1.3b1'
 
 requires = [
     'setuptools>=2.2',
@@ -10,9 +10,15 @@ requires = [
     'vccs_client>=0.4.1',
 ]
 
-test_requires = []
+# Flavours
+webapp_requires = [
+    'pysaml2 >= 1.2.0beta2',  # version sync with dashboard to avoid pip catastrophies
+    'redis >= 2.10.5',
+]
+webapp_extras = webapp_requires + []
 
-testing_extras = test_requires + []
+test_requires = []
+testing_extras = test_requires + webapp_extras + []
 
 long_description = open('README.txt').read()
 
@@ -37,6 +43,7 @@ setup(name='eduid-common',
       tests_require=test_requires,
       extras_require={
           'testing': testing_extras,
+          'webapp': webapp_extras,
       },
       entry_points="""
       """,
