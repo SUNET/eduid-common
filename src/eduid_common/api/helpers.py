@@ -80,7 +80,7 @@ def rm_nin_from_user(user, nin):
         result = current_app.am_relay.request_user_sync(proofing_user)
         current_app.logger.info('Sync result for user {!s}: {!s}'.format(proofing_user, result))
     else:
-        current_app.logger.info("Can't remove NIN - user {} has no NIN {}".format(user, nin))
+        current_app.logger.info("Can't remove NIN - user {!r} has no NIN {}".format(user, nin))
 
 
 def verify_nin_for_user(user, proofing_state, proofing_log_entry):
