@@ -72,7 +72,9 @@ def retrieve_modified_ts(user, dashboard_userdb=None):
         user, dashboard_user, dashboard_user.modified_ts))
 
 
-def get_user(userdb, user_class=ProofingUser):
+def get_user(userdb=None, user_class=ProofingUser):
+    if userdb is None:
+        userdb = current_app.proofing_userdb
     eppn = session.get('user_eppn', None)
     if not eppn:
         raise ApiException('Not authorized', status_code=401)
@@ -113,7 +115,7 @@ def save_dashboard_user(user):
     return current_app.am_relay.request_user_sync(user)
 
 
-def save_user(user):
+def save_user(user, check_sync = True):
     """
     Save (new) user objects to the db in the new format,
     and propagate the changes to the central user db.
@@ -126,7 +128,7 @@ def save_user(user):
     if isinstance(user, User) and not isinstance(user, ProofingUser):
         # turn it into a ProofingUser before saving it in the dashboard private db
         user = ProofingUser(data = user.to_dict())
-    current_app.proofing_userdb.save(user)
+    current_app.proofing_userdb.save(user, check_sync = check_sync)
     return current_app.am_relay.request_user_sync(user)
 
 
