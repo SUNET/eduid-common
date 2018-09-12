@@ -4,12 +4,16 @@ from __future__ import absolute_import
 
 import logging
 import six
-import json
 from functools import wraps
 from nacl import secret, encoding, exceptions
 from string import Template
 
-from eduid_common.config.parsers.exceptions import SecretKeyException
+try:
+    FileNotFoundError
+    PermissionError
+except NameError:
+    FileNotFoundError = IOError
+    PermissionError = IOError
 
 __author__ = 'lundberg'
 
@@ -47,10 +51,7 @@ def init_secret_box(key_name=None, secret_key=None):
     :rtype: SecretBox
     """
     if not secret_key:
-        try:
-            secret_key = read_secret_key(key_name)
-        except IOError as e:
-            raise SecretKeyException(str(e))
+        secret_key = read_secret_key(key_name)
     return secret.SecretBox(secret_key)
 
 
@@ -72,9 +73,12 @@ def decrypt_config(config_dict):
                 if not boxes.get(key_name):
                     try:
                         boxes[key_name] = init_secret_box(key_name=key_name)
-                    except SecretKeyException as e:
-                        logging.debug(e)
+                    except FileNotFoundError as e:
+                        logging.info(e)
                         continue  # Try next key
+                    except PermissionError as e:
+                        logging.error(e)
+                        raise e
                 try:
                     if six.PY2:
                         encrypted_value = encrypted_value.encode('ascii')
