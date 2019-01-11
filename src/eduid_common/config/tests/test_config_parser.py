@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import unittest
 import os
+import unittest
+import pkg_resources
 
 from eduid_common.config.parsers import ConfigParser
 from eduid_common.config.parsers.ini import IniConfigParser
@@ -24,3 +25,10 @@ class TestEtcdParser(unittest.TestCase):
         os.environ.setdefault('EDUID_CONFIG_NS', '/test/ns/')
         parser = ConfigParser()
         self.assertIsInstance(parser, EtcdConfigParser)
+
+    def test_loading_non_usascii(self):
+        data_dir = pkg_resources.resource_filename(__name__, 'data')
+        config_file = os.path.join(data_dir, 'eduid_msg.ini')
+        parser = IniConfigParser(config_file)
+        settings = parser.read_configuration()
+        self.assertTrue(settings['MM_DEFAULT_SUBJECT'].startswith('Meddelande'))

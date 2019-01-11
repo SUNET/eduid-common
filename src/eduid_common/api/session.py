@@ -234,6 +234,22 @@ class Session(collections.MutableMapping):
             token = self.new_csrf_token()
         return token
 
+    @property
+    def user_eppn(self):
+        """
+        :rtype: str | None
+        :return: Return the eppn of the currently logged in user.
+        """
+        return self._session.get('user_eppn')
+
+    def authn_set_user_eppn(self, value):
+        """
+        Set the currently logged in user. ONLY AUTHN SHOULD DO THIS.
+        :param value: eppn of logged in user
+        :type value: str
+        """
+        self._session['user_eppn'] = value
+
 
 class SessionFactory(SessionInterface):
     """
