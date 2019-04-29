@@ -110,8 +110,7 @@ class EduidSession(SessionMixin, MutableMapping):
 
     @signup.setter
     def signup(self, value: Optional[Signup]):
-        if not self._signup:
-            self._signup = value
+        self._signup = value
 
     @property
     def actions(self) -> Optional[Actions]:
@@ -121,8 +120,7 @@ class EduidSession(SessionMixin, MutableMapping):
 
     @actions.setter
     def actions(self, value: Optional[Actions]):
-        if not self._actions:
-            self._actions = value
+        self._actions = value
 
     @property
     def token(self):
