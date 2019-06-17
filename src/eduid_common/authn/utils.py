@@ -47,7 +47,7 @@ from saml2.server import Server as Saml2Server
 from eduid_common.api.utils import urlappend
 from eduid_common.session import session
 
-import eduid_common.authn
+from eduid_common.authn.idp_saml import IdP_SAMLRequest
 
 
 logger = logging.getLogger(__name__)
@@ -194,7 +194,7 @@ def b64encode(source):
 
 
 def get_requested_authn_context(idp: Saml2Server,
-                                saml_req: eduid_common.authn.idp_saml.IdP_SAMLRequest,
+                                saml_req: IdP_SAMLRequest,
                                 logger: logging.Logger) -> Optional[str]:
     """
     Check if the SP has explicit Authn preferences in the metadata (some SPs are not

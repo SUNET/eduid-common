@@ -17,7 +17,7 @@ from hashlib import sha1
 from collections import deque
 from binascii import unhexlify
 
-from typing import NewType, List, Deque, AnyStr
+from typing import NewType, List, Deque, AnyStr, Optional
 
 import six
 
@@ -281,7 +281,7 @@ class ExpiringCacheCommonSession(ExpiringCache):
         session.commit()
         return session
 
-    def get(self, key: str) -> RedisEncryptedSession:
+    def get(self, key: str) -> Optional[RedisEncryptedSession]:
         """
         Fetch data from cache based on `key'.
 
