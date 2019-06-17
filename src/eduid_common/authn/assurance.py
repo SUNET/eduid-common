@@ -72,8 +72,8 @@ class AuthnState(object):
         :param user:
         :param sso_session:
 
-        :type user: eduid_idp.idp_user.IdPUser
-        :type sso_session: eduid_idp.sso_session.SSOSession
+        :type user: IdPUser
+        :type sso_session: SSOSession
         """
         self.logger = logger
 

@@ -64,7 +64,7 @@ class IdPConfig(dict):
         raise AttributeError('Configuration key not found')
 
 
-def init_config(module: str = 'eduid_idp.settings.defaults',
+def init_config(module: str = 'eduid_common.config.tests.idp_test_config',
                 test_config: Optional[dict] = None) -> IdPConfig:
     obj = import_module(module)
     config = IdPConfig()
