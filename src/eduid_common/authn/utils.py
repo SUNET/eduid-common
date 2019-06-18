@@ -44,9 +44,6 @@ from pwgen import pwgen
 from saml2.config import SPConfig
 from saml2.server import Server as Saml2Server
 
-
-from eduid_userdb.idp import IdPUser
-from eduid_common.session.cherrypy_idp import IdPConfig
 from eduid_common.api.utils import urlappend
 from eduid_common.session import session
 
@@ -215,58 +212,3 @@ def get_requested_authn_context(idp: Saml2Server,
         res = new_authn
 
     return res
-
-
-def make_scoped_eppn(attributes: dict, config: IdPConfig) -> dict:
-    """
-    Add scope to unscoped eduPersonPrincipalName attributes before relasing them.
-
-    What scope to add, if any, is currently controlled by the configuration parameter
-    `default_eppn_scope'.
-
-    :param attributes: Attributes of a user
-    :param config: IdP configuration data
-    :return: New attributes
-    """
-    eppn = attributes.get('eduPersonPrincipalName')
-    scope = config['DEFAULT_EPPN_SCOPE']
-    if not eppn or not scope:
-        return attributes
-    if '@' not in eppn:
-        attributes['eduPersonPrincipalName'] = eppn + '@' + scope
-    return attributes
-
-
-def add_scoped_affiliation(attributes: dict, config: IdPConfig) -> dict:
-    """
-    Add eduPersonScopedAffiliation if configured, and not already present.
-
-    This default affiliation is currently controlled by the configuration parameter
-    `default_scoped_affiliation'.
-
-    :param attributes: Attributes of a user
-    :param config: IdP configuration data
-
-    :return: New attributes
-    """
-    epsa = 'eduPersonScopedAffiliation'
-    if epsa not in attributes and config.get('DEFAULT_SCOPED_AFFILIATION'):
-        attributes[epsa] = config['DEFAULT_SCOPED_AFFILIATION']
-    return attributes
-
-
-def add_eduperson_assurance(attributes: dict, user: IdPUser) -> dict:
-    """
-    Add an eduPersonAssurance attribute indicating the level of id-proofing
-    a user has achieved, regardless of current session authentication strength.
-
-    :param attributes: Attributes of a user
-    :param user: The user in question
-
-    :return: New attributes
-    """
-    attributes['eduPersonAssurance'] = 'http://www.swamid.se/policy/assurance/al1'
-    _verified_nins = [x for x in user.nins.to_list() if x.is_verified]
-    if _verified_nins:
-        attributes['eduPersonAssurance'] = 'http://www.swamid.se/policy/assurance/al2'
-    return attributes
