@@ -20,8 +20,8 @@ from flask.sessions import SessionInterface, SessionMixin
 
 from eduid_common.config.exceptions import BadConfiguration
 from eduid_common.session.redis_session import SessionManager, RedisEncryptedSession
-from eduid_common.session.namespaces import SessionNSBase, Common, MfaAction
-from eduid_common.session.namespaces import Signup, Actions
+from eduid_common.session.namespaces import SessionNSBase, Common, MfaAction, SamlIdp
+from eduid_common.session.namespaces import Signup, Actions, Login
 from eduid_common.session.logindata import SSOLoginData
 
 
@@ -54,6 +54,8 @@ class EduidSession(SessionMixin, MutableMapping):
         self._mfa_action: Optional[MfaAction] = None
         self._signup: Optional[Signup] = None
         self._actions: Optional[Actions] = None
+        self._login: Optional[Login] = None
+        self._saml_idp: Optional[SamlIdp] = None
         self._sso_ticket: Optional[SSOLoginData] = None
 
     def __getitem__(self, key, default=None):
@@ -131,6 +133,28 @@ class EduidSession(SessionMixin, MutableMapping):
     def actions(self, value: Optional[Actions]):
         if not self._actions:
             self._actions = value
+
+    @property
+    def login(self) -> Optional[Login]:
+        if not self._login:
+            self._login = Login.from_dict(self._session.get('_login', {}))
+        return self._login
+
+    @login.setter
+    def login(self, value: Optional[Login]):
+        if not self._login:
+            self._login = value
+
+    @property
+    def saml_idp(self) -> Optional[SamlIdp]:
+        if not self._saml_idp:
+            self._saml_idp = SamlIdp.from_dict(self._session.get('_saml_idp', {}))
+        return self._saml_idp
+
+    @saml_idp.setter
+    def saml_idp(self, value: Optional[SamlIdp]):
+        if not self._saml_idp:
+            self._saml_idp = value
 
     @property
     def sso_ticket(self) -> Optional[SSOLoginData]:

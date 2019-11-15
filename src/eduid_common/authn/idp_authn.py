@@ -38,15 +38,19 @@ such as rate limiting.
 """
 
 import datetime
+import logging
 from typing import Optional
 
 import vccs_client
+from eduid_userdb import MongoDB, User
 from eduid_userdb.credentials import Password
 from eduid_userdb.exceptions import UserHasNotCompletedSignup
 from eduid_userdb.idp import IdPUser
-from eduid_userdb import MongoDB
+
 from eduid_common.api import exceptions
 from eduid_common.authn import get_vccs_client
+
+module_logger = logging.getLogger(__name__)
 
 
 class AuthnData(object):
@@ -72,8 +76,8 @@ class AuthnData(object):
         """
         :type value: IdPUser
         """
-        if not isinstance(value, IdPUser):
-            raise ValueError('Invalid user (expect IdPUser, got {})'.format(type(value)))
+        if not isinstance(value, User):
+            raise ValueError('Invalid user (expect User, got {})'.format(type(value)))
         self._user = value
 
     @property
@@ -137,7 +141,7 @@ class IdPAuthn(object):
         if self.authn_store is None and config.mongo_uri:
             self.authn_store = AuthnInfoStoreMDB(uri = config.mongo_uri, logger = logger)
 
-    def password_authn(self, data: dict) -> Optional[AuthnData]:
+    def password_authn(self, data: dict, lookup_user=None) -> Optional[AuthnData]:
         """
         Authenticate someone using a username and password.
 
@@ -149,7 +153,10 @@ class IdPAuthn(object):
         del data  # keep sensitive data out of Sentry logs
 
         try:
-            user = self.userdb.lookup_user(username)
+            if lookup_user is None:
+                user = self.userdb.lookup_user(username)
+            else:
+                user = lookup_user(username)
         except UserHasNotCompletedSignup:
             # XXX Redirect user to some kind of info page
             return None

@@ -4,9 +4,9 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from datetime import datetime
 
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 
-from typing import Optional
+from typing import Optional, Dict
 from enum import Enum, unique
 
 __author__ = 'ft'
@@ -48,6 +48,37 @@ class Common(SessionNSBase):
         if _data.get('login_source') is not None:
             _data['login_source'] = LoginApplication(_data['login_source'])
         return cls(**_data)
+
+
+@dataclass()
+class SamlRequestInfo:
+    saml_request: str
+    relay_state: str
+    binding: str
+
+
+@dataclass()
+class SamlIdp(SessionNSBase):
+    requests: Dict[str, SamlRequestInfo] = field(default_factory=dict)
+
+
+@dataclass()
+class LoginRequest:
+    require_mfa: bool = False
+    return_endpoint_url: Optional[str] = None
+    expires_at: Optional[datetime] = None
+
+
+@dataclass()
+class LoginResponse:
+    credentials_used: list = field(default_factory=list)
+    expires_at: Optional[datetime] = None
+
+
+@dataclass()
+class Login(SessionNSBase):
+    requests: Dict[str, LoginRequest] = field(default_factory=dict)
+    responses: Dict[str, LoginResponse] = field(default_factory=dict)
 
 
 @dataclass()
