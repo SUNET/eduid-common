@@ -148,12 +148,8 @@ class IdP_SAMLRequest(object):
     def relay_state(self, value: Optional[str]):
         self._relay_state = value
 
-    def get_response_args(self, bad_request=None, key: str = None) -> ResponseArgs:
-        if bad_request is not None:
-            warnings.warn(
-                "bad_request argument deprecated",
-                DeprecationWarning
-            )
+    def get_response_args(self, bad_request, key: str = None) -> ResponseArgs:
+
         if not key:
             raise TypeError(f'argument key can not be {type(key)}')
         try:
@@ -168,15 +164,15 @@ class IdP_SAMLRequest(object):
             resp_args['destination'] = destination
         except UnknownPrincipal as excp:
             module_logger.info(f'{key}: Unknown service provider: {excp}')
-            raise BadRequest("Don't know the SP that referred you here")
+            raise bad_request("Don't know the SP that referred you here")
         except UnsupportedBinding as excp:
             module_logger.info(f'{key}: Unsupported SAML binding: {excp}')
-            raise BadRequest("Don't know how to reply to the SP that referred you here")
+            raise bad_request("Don't know how to reply to the SP that referred you here")
         except UnknownSystemEntity as exc:
             # TODO: Validate refactoring didn't move this exception handling to the wrong place.
             #       Used to be in an exception handler in _redirect_or_post around perform_login().
             module_logger.info(f'{key}: Service provider not known: {exc}')
-            raise BadRequest('SAML_UNKNOWN_SP')
+            raise bad_request('SAML_UNKNOWN_SP')
 
         return ResponseArgs(resp_args)
 

@@ -1,13 +1,23 @@
 # -*- coding: utf-8 -*-
 
-from abc import ABC, abstractmethod
+# From https://stackoverflow.com/a/39757388
+# The TYPE_CHECKING constant is always False at runtime, so the import won't be evaluated, but mypy
+# (and other type-checking tools) will evaluate the contents of that block.
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from eduid_common.session.logindata import ExternalMfaData
+
+from abc import ABC
 from copy import deepcopy
-from datetime import datetime
-
 from dataclasses import dataclass, asdict, field
-
-from typing import Optional, Dict
+from datetime import datetime
 from enum import Enum, unique
+from typing import Optional, Dict
+from eduid_userdb.credentials import Credential
+
 
 __author__ = 'ft'
 
@@ -64,15 +74,18 @@ class SamlIdp(SessionNSBase):
 
 @dataclass()
 class LoginRequest:
+    expires_at: datetime
+    return_endpoint_url: str
     require_mfa: bool = False
-    return_endpoint_url: Optional[str] = None
-    expires_at: Optional[datetime] = None
 
 
 @dataclass()
 class LoginResponse:
-    credentials_used: list = field(default_factory=list)
-    expires_at: Optional[datetime] = None
+    expires_at: datetime
+    sso_session_id: str
+    #credentials_used: list = field(default_factory=list)  XXX: For later?
+    mfa_action_creds: Dict[Credential, datetime] = field(default_factory=dict, init=False)
+    mfa_action_external: Optional[ExternalMfaData] = field(default=None, init=False)
 
 
 @dataclass()

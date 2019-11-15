@@ -4,7 +4,9 @@
 # The TYPE_CHECKING constant is always False at runtime, so the import won't be evaluated, but mypy
 # (and other type-checking tools) will evaluate the contents of that block.
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from eduid_common.api.app import EduIDApp
 

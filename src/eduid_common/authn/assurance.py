@@ -39,6 +39,8 @@ from eduid_common.authn.idp_saml import AuthnInfo
 from eduid_userdb.idp import IdPUser
 from eduid_userdb.credentials import Credential, METHOD_SWAMID_AL2_MFA, METHOD_SWAMID_AL2_MFA_HI
 
+from eduid_userdb import User
+
 """
 Assurance Level functionality.
 """
@@ -142,12 +144,10 @@ class AuthnState(object):
 
 
 # Can't type sso_session: SSOSession here because it creates an import dependency loop
-def response_authn(req_authn_ctx: Optional[str], user: IdPUser, sso_session, logger: logging.Logger) -> AuthnInfo:
+def response_authn(req_authn_ctx: Optional[str], user: User, sso_session, logger: logging.Logger) -> AuthnInfo:
     """
     Figure out what AuthnContext to assert in a SAML response,
     given the RequestedAuthnContext from the SAML request.
-
-    :param req_authn_ctx: Requested authn context class
     """
     authn = AuthnState(user, sso_session, logger)
     logger.info(f'Authn for {user} will be evaluated based on: {authn}')
