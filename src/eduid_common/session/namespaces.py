@@ -47,7 +47,7 @@ class Common(SessionNSBase):
     login_source: Optional[LoginApplication] = None
 
     def to_dict(self):
-        res = asdict(self)
+        res = super(Common, self).to_dict()
         if res.get('login_source') is not None:
             res['login_source'] = res['login_source'].value
         return res
@@ -61,7 +61,7 @@ class Common(SessionNSBase):
 
 
 @dataclass()
-class SamlRequestInfo:
+class SamlRequestInfo(SessionNSBase):
     saml_request: str
     relay_state: str
     binding: str
@@ -71,27 +71,53 @@ class SamlRequestInfo:
 class SamlIdp(SessionNSBase):
     requests: Dict[str, SamlRequestInfo] = field(default_factory=dict)
 
+    @classmethod
+    def from_dict(cls, data):
+        _data = deepcopy(data)  # do not modify callers data
+        for key, request in _data.get('requests', {}).items():
+            _data['requests'][key] = SamlRequestInfo.from_dict(request)
+        return cls(**_data)
+
 
 @dataclass()
-class LoginRequest:
+class ExpiringData(SessionNSBase):
     expires_at: datetime
+
+    @classmethod
+    def from_dict(cls, data):
+        _data = deepcopy(data)  # do not modify callers data
+        if _data.get('expires_at') is not None:
+            _data['expires_at'] = datetime.fromisoformat(_data.get('expires_at'))
+        return cls(**_data)
+
+
+@dataclass()
+class LoginRequest(ExpiringData):
     return_endpoint_url: str
     require_mfa: bool = False
 
 
 @dataclass()
-class LoginResponse:
-    expires_at: datetime
+class LoginResponse(ExpiringData):
     sso_session_id: str
     #credentials_used: list = field(default_factory=list)  XXX: For later?
-    mfa_action_creds: Dict[Credential, datetime] = field(default_factory=dict, init=False)
-    mfa_action_external: Optional[ExternalMfaData] = field(default=None, init=False)
+    mfa_action_creds: Dict[Credential, datetime] = field(default_factory=dict)
+    mfa_action_external: Optional[ExternalMfaData] = field(default=None)
 
 
 @dataclass()
 class Login(SessionNSBase):
     requests: Dict[str, LoginRequest] = field(default_factory=dict)
     responses: Dict[str, LoginResponse] = field(default_factory=dict)
+
+    @classmethod
+    def from_dict(cls, data):
+        _data = deepcopy(data)  # do not modify callers data
+        for key, request in _data.get('requests', {}).items():
+            _data['requests'][key] = LoginRequest.from_dict(request)
+        for key, response in _data.get('responses', {}).items():
+            _data['responses'][key] = LoginResponse.from_dict(response)
+        return cls(**_data)
 
 
 @dataclass()
@@ -106,23 +132,18 @@ class MfaAction(SessionNSBase):
 class TimestampedNS(SessionNSBase):
     ts: Optional[datetime] = None
 
-    def to_dict(self):
-        res = super(TimestampedNS, self).to_dict()
-        if res.get('ts') is not None:
-            res['ts'] = str(int(res['ts'].timestamp()))
-        return res
-
     @classmethod
     def from_dict(cls, data):
         _data = deepcopy(data)  # do not modify callers data
         if _data.get('ts') is not None:
-            _data['ts'] = datetime.fromtimestamp(int(_data['ts']))
+            _data['ts'] = datetime.fromisoformat(_data['ts'])
         return cls(**_data)
 
 
 @dataclass()
 class Signup(TimestampedNS):
     """"""
+
 
 @dataclass()
 class Actions(TimestampedNS):
