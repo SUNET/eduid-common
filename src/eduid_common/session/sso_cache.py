@@ -10,6 +10,8 @@
 #          Roland Hedberg
 #
 import logging
+import warnings
+
 import time
 import uuid
 import datetime
@@ -24,6 +26,7 @@ import six
 from eduid_common.session.redis_session import SessionManager, RedisEncryptedSession
 from eduid_common.config.idp import IdPConfig
 from eduid_userdb import MongoDB
+from eduid_common.session.sso_session import SSOSession, from_dict as sso_session_from_dict
 
 _SHA1_HEXENCODED_SIZE = 160 // 8 * 2
 
@@ -364,10 +367,17 @@ class SSOSessionCacheMDB(SSOSessionCache):
                      }
         self.sso_sessions.update(_test_doc, {'$set': {'data': data}})
 
-    def get_session(self, sid: SSOSessionId):
+    def get_session(self, sid: SSOSessionId, return_object=False):
         try:
             res = self.sso_sessions.find_one({'session_id': sid})
             if res:
+                if return_object:
+                    return sso_session_from_dict(res['data'])
+                warnings.warn(
+                    "This function will stop returning dicts in a later version."
+                    " Use parameter return_object=True to be compatible with the future.",
+                    DeprecationWarning
+                )
                 return res['data']
         except KeyError:
             self.logger.debug('Failed looking up SSO session with id={!r}'.format(sid))
