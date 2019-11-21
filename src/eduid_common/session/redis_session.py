@@ -77,22 +77,22 @@ appending equal-signs ('=') at the end, since that is not allowed
 in an NCName.
 """
 
-from __future__ import unicode_literals
-
-import six
+import base64
+import collections
+import datetime
+import hashlib
 import hmac
 import json
-import hashlib
-import collections
-import redis
-import redis.sentinel
+import logging
+
+import nacl.encoding
 import nacl.secret
 import nacl.utils
-import nacl.encoding
-import base64
+import redis
+import redis.sentinel
+import six
 from saml2.saml import NameID
 
-import logging
 logger = logging.getLogger(__name__)
 
 # Prepend an 'a' so we always have a valid NCName,
@@ -118,10 +118,12 @@ def get_redis_pool(cfg):
     return pool
 
 
-class NameIDEncoder(json.JSONEncoder):
+class SessionJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, NameID):
             return str(obj)
+        elif isinstance(obj, datetime.datetime) or isinstance(obj, datetime.date):
+            return obj.isoformat()
         return json.JSONEncoder.default(self, obj)
 
 
@@ -344,7 +346,7 @@ class RedisEncryptedSession(collections.MutableMapping):
             logger.debug('Storing data in cache[{}]:\n{!r}'.format(self.session_id, data_dict))
         nonce = nacl.utils.random(nacl.secret.SecretBox.NONCE_SIZE)
         # Version data to make it easier to know how to decode it on reading
-        data_json = json.dumps(data_dict, cls=NameIDEncoder)
+        data_json = json.dumps(data_dict, cls=SessionJSONEncoder)
         versioned = {'v2': bytes(self.nacl_box.encrypt(data_json.encode('ascii'), nonce,
                                                        encoder=nacl.encoding.Base64Encoder)).decode('ascii')
                      }

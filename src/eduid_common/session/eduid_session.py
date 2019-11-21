@@ -19,7 +19,7 @@ from flask import request as flask_request
 from flask.sessions import SessionInterface, SessionMixin
 
 from eduid_common.config.exceptions import BadConfiguration
-from eduid_common.session.redis_session import SessionManager, RedisEncryptedSession
+from eduid_common.session.redis_session import SessionManager, RedisEncryptedSession, SessionJSONEncoder
 from eduid_common.session.namespaces import SessionNSBase, Common, MfaAction, SamlIdp
 from eduid_common.session.namespaces import Signup, Actions, Login
 from eduid_common.session.logindata import SSOLoginData
@@ -281,7 +281,7 @@ class EduidSession(SessionMixin, MutableMapping):
             if self._session.session_id is not None:
                 self._session.commit()
                 if self.app.debug:
-                    _saved_data = json.dumps(self._session.to_dict(), indent=4, sort_keys=True)
+                    _saved_data = json.dumps(self._session.to_dict(), indent=4, sort_keys=True, cls=SessionJSONEncoder)
                     self.app.logger.debug(f'Saved session:\n{_saved_data}')
             else:
                 self.app.logger.warning('Tried to persist a session with no session id')
