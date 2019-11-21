@@ -16,10 +16,16 @@ class LoggingMiddleware(object):
 
     def __call__(self, environ, resp):
         errorlog = environ['wsgi.errors']
-        pprint.pprint(('REQUEST', environ), stream=errorlog)
+        try:
+            pprint.pprint(('REQUEST', environ), stream=errorlog)
+        except AttributeError:
+            pass
 
         def log_response(status, headers, *args):
-            pprint.pprint(('RESPONSE', status, headers), stream=errorlog)
+            try:
+                pprint.pprint(('RESPONSE', status, headers), stream=errorlog)
+            except AttributeError:
+                pass
             return resp(status, headers, *args)
 
         return self._app(environ, log_response)
