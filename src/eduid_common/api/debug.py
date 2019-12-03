@@ -66,8 +66,11 @@ def dump_config(app):
 def init_app_debug(app):
     app.wsgi_app = LoggingMiddleware(app.wsgi_app)
     dump_config(app)
+    return app
+
+
+def log_app_routes(app) -> None:
+    # Moved from init_app_debug as the routes are not set up when it is run
     log_endpoints(app)
     pprint.pprint(('view_functions', app.view_functions), stream=sys.stderr)
     pprint.pprint(('url_map', app.url_map), stream=sys.stderr)
-
-    return app
