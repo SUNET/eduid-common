@@ -5,7 +5,9 @@
 # (and other type-checking tools) will evaluate the contents of that block.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
+
+from eduid_common.authn.idp_authn import AuthnData
 
 if TYPE_CHECKING:
     from eduid_common.session.logindata import ExternalMfaData
@@ -100,7 +102,7 @@ class LoginRequest(ExpiringData):
 @dataclass()
 class LoginResponse(ExpiringData):
     sso_session_id: str
-    #credentials_used: list = field(default_factory=list)  XXX: For later?
+    credentials_used: List[AuthnData] = field(default_factory=list)
     mfa_action_creds: Dict[Credential, datetime] = field(default_factory=dict)
     mfa_action_external: Optional[ExternalMfaData] = field(default=None)
 
