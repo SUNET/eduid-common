@@ -101,9 +101,8 @@ class LoginRequest(ExpiringData):
 
 @dataclass()
 class LoginResponse(ExpiringData):
-    sso_session_id: str
+    public_sso_session_id: str
     credentials_used: List[AuthnData] = field(default_factory=list)
-    mfa_action_creds: Dict[Credential, datetime] = field(default_factory=dict)
     mfa_action_external: Optional[ExternalMfaData] = field(default=None)
 
 
