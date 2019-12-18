@@ -100,10 +100,31 @@ class LoginRequest(ExpiringData):
 
 
 @dataclass()
+class SessionAuthnData:
+    cred_id: str
+    authn_ts: datetime
+
+    @classmethod
+    def from_dict(cls, data):
+        _data = deepcopy(data)  # do not modify callers data
+        if data.get('authn_ts') and not isinstance(datetime, data.get('authn_ts')):
+            _data['authn_ts'] = datetime.fromisoformat(_data['authn_ts'])
+        return cls(**_data)
+
+
+@dataclass()
 class LoginResponse(ExpiringData):
     public_sso_session_id: str
-    credentials_used: List[AuthnData] = field(default_factory=list)
+    credentials_used: List[SessionAuthnData] = field(default_factory=list)
     mfa_action_external: Optional[ExternalMfaData] = field(default=None)
+
+    @classmethod
+    def from_dict(cls, data):
+        _data = deepcopy(data)  # do not modify callers data
+        _data['credentials_used'] = []
+        for item in data.get('credentials_used'):
+            _data['credentials_used'].append(SessionAuthnData.from_dict(item))
+        return cls(**_data)
 
 
 @dataclass()
