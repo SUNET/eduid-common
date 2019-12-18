@@ -3,7 +3,7 @@ import warnings
 import six
 import logging
 from dataclasses import dataclass
-from typing import Mapping, NewType, Optional, AnyStr
+from typing import Mapping, NewType, Optional, AnyStr, List
 from hashlib import sha1
 
 from eduid_common.authn import utils
@@ -141,6 +141,22 @@ class IdP_SAMLRequest(object):
             return {}
 
     @property
+    def sp_digest_algs(self) -> List[str]:
+        """Return the best signing algorithm that both the IdP and SP supports"""
+        try:
+            return self._idp.metadata.supported_algorithms(self.sp_entity_id)['digest_methods']
+        except KeyError:
+            return []
+
+    @property
+    def sp_sign_algs(self) -> List[str]:
+        """Return the best signing algorithm that both the IdP and SP supports"""
+        try:
+            return self._idp.metadata.supported_algorithms(self.sp_entity_id)['signing_methods']
+        except KeyError:
+            return []
+
+    @property
     def relay_state(self) -> Optional[str]:
         return self._relay_state
 
@@ -154,7 +170,6 @@ class IdP_SAMLRequest(object):
             raise TypeError(f'argument key can not be {type(key)}')
         try:
             resp_args = self._idp.response_args(self._req_info.message)
-
             # not sure if we need to call pick_binding again (already done in response_args()),
             # but it is what we've always done
             binding_out, destination = self._idp.pick_binding('assertion_consumer_service', entity_id=self.sp_entity_id)
