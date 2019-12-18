@@ -85,12 +85,9 @@ class SamlIdp(SessionNSBase):
 class ExpiringData(SessionNSBase):
     expires_at: datetime
 
-    @classmethod
-    def from_dict(cls, data):
-        _data = deepcopy(data)  # do not modify callers data
-        if _data.get('expires_at') is not None:
-            _data['expires_at'] = datetime.fromisoformat(_data.get('expires_at'))
-        return cls(**_data)
+    def __post_init__(self):
+        if isinstance(self.expires_at, str):
+            self.expires_at = datetime.fromisoformat(self.expires_at)
 
 
 @dataclass()
@@ -107,7 +104,7 @@ class SessionAuthnData:
     @classmethod
     def from_dict(cls, data):
         _data = deepcopy(data)  # do not modify callers data
-        if data.get('authn_ts') and not isinstance(datetime, data.get('authn_ts')):
+        if data.get('authn_ts') and not isinstance(data.get('authn_ts'), datetime):
             _data['authn_ts'] = datetime.fromisoformat(_data['authn_ts'])
         return cls(**_data)
 
