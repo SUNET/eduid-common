@@ -19,6 +19,14 @@ ResponseArgs = NewType('ResponseArgs', dict)
 module_logger = logging.getLogger(__name__)
 
 
+class SAMLParseError(Exception):
+    pass
+
+
+class SAMLValidationError(Exception):
+    pass
+
+
 def gen_key(something: AnyStr) -> str:
     """
     Generate a unique (not strictly guaranteed) key based on `something'.
@@ -62,13 +70,13 @@ class IdP_SAMLRequest(object):
         except UnravelError as exc:
             module_logger.info(f'Failed parsing SAML request ({len(request)} bytes)')
             module_logger.debug(f'Failed parsing SAML request:\n{request}\nException {exc}')
-            raise
+            raise SAMLParseError('Failed parsing SAML request')
 
         if not self._req_info:
             # Either there was no request, or pysaml2 found it to be unacceptable.
             # For example, the IssueInstant might have been out of bounds.
             module_logger.debug('No valid SAMLRequest returned by pysaml2')
-            raise ValueError('No valid SAMLRequest returned by pysaml2')
+            raise SAMLValidationError('No valid SAMLRequest returned by pysaml2')
 
         # Only perform expensive parse/pretty-print if debugging
         if debug:
