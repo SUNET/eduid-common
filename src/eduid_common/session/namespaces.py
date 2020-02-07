@@ -94,6 +94,8 @@ class ExpiringData(SessionNSBase):
 class LoginRequest(ExpiringData):
     return_endpoint_url: str
     require_mfa: bool = False
+    verified_credentials: List[SessionAuthnData] = field(default_factory=list)
+    user_eppn: Optional[str] = None
 
 
 @dataclass()
