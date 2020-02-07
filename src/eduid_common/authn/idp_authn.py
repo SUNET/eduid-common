@@ -59,7 +59,7 @@ class AuthnData(object):
 
     Returned from functions performing authentication.
     """
-    def __init__(self, user, credential, timestamp):
+    def __init__(self, user: User, credential: Credential, timestamp: datetime.datetime):
         self.user = user
         self.credential = credential
         self.timestamp = timestamp

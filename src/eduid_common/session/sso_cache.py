@@ -363,7 +363,8 @@ class SSOSessionCacheMDB(SSOSessionCache):
                      }
         self.sso_sessions.update(_test_doc, {'$set': {'data': data}})
 
-    def get_session(self, sid: SSOSessionId, return_object: bool = False) -> Optional[Dict[str, Any]]:
+    def get_session(self, sid: SSOSessionId, return_object: bool = False) -> \
+            Optional[Union[Dict[str, Any], SSOSession]]:
         try:
             res = self.sso_sessions.find_one({'session_id': sid})
             if res:
