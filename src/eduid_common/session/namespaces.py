@@ -94,14 +94,18 @@ class ExpiringData(SessionNSBase):
 class LoginRequest(ExpiringData):
     return_endpoint_url: str
     require_mfa: bool = False
+    force_authn: bool = False
     verified_credentials: List[SessionAuthnData] = field(default_factory=list)
-    user_eppn: Optional[str] = None
+    eppn: Optional[str] = None
+    sso_session_public_id: Optional[str] = None
 
 
 @dataclass()
 class SessionAuthnData:
     cred_id: str
     authn_ts: datetime
+    issuer: Optional[str] = None
+    authn_context: Optional[str] = None
 
     @classmethod
     def from_dict(cls, data):

@@ -363,19 +363,9 @@ class SSOSessionCacheMDB(SSOSessionCache):
                      }
         self.sso_sessions.update(_test_doc, {'$set': {'data': data}})
 
-    def get_session(self, sid: SSOSessionId, return_object: bool = False) -> \
-            Optional[Union[Dict[str, Any], SSOSession]]:
+    def get_session(self, sid: SSOSessionId) -> Optional[Dict[str, Any]]:
         try:
             res = self.sso_sessions.find_one({'session_id': sid})
-            if res:
-                if return_object:
-                    return sso_session_from_dict(res['data'])
-                warnings.warn(
-                    "This function will stop returning dicts in a later version."
-                    " Use parameter return_object=True to be compatible with the future.",
-                    DeprecationWarning
-                )
-                return res['data']
         except KeyError:
             self.logger.debug('Failed looking up SSO session with id={!r}'.format(sid))
             raise
