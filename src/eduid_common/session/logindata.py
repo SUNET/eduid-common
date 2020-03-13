@@ -7,9 +7,10 @@ from html import escape
 from typing import Dict, Mapping, Optional, Type
 from urllib.parse import urlencode
 
+from eduid_userdb.credentials import Credential
+
 from eduid_common.authn.idp_saml import IdP_SAMLRequest
 from eduid_common.session.namespaces import SessionNSBase
-from eduid_userdb.credentials import Credential
 
 #
 # Copyright (c) 2013, 2014, 2016 NORDUnet A/S. All rights reserved.

@@ -39,6 +39,11 @@ from dataclasses import asdict
 from sys import stderr
 from typing import Optional, Type
 
+from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+from eduid_userdb import UserDB
+
 from eduid_common.api.debug import init_app_debug
 from eduid_common.api.exceptions import init_exception_handlers, init_sentry
 from eduid_common.api.logging import init_logging
@@ -51,9 +56,6 @@ from eduid_common.config.exceptions import BadConfiguration
 from eduid_common.config.parsers.etcd import EtcdConfigParser
 from eduid_common.session.eduid_session import SessionFactory
 from eduid_common.stats import init_app_stats
-from eduid_userdb import UserDB
-from flask import Flask
-from werkzeug.middleware.proxy_fix import ProxyFix
 
 DEBUG = os.environ.get('EDUID_APP_DEBUG', False)
 if DEBUG:

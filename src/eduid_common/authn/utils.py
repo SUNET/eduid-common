@@ -40,10 +40,11 @@ import sys
 import time
 
 import six
-from eduid_common.api.utils import urlappend
 from pwgen import pwgen
 from saml2 import server
 from saml2.config import SPConfig
+
+from eduid_common.api.utils import urlappend
 
 logger = logging.getLogger(__name__)
 

@@ -30,11 +30,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from eduid_common.authn import vccs as vccs_module
-from eduid_common.authn.testing import TestVCCSClient
+from mock import patch
+
 from eduid_userdb.actions.chpass import ChpassUser
 from eduid_userdb.testing import MongoTestCase
-from mock import patch
+
+from eduid_common.authn import vccs as vccs_module
+from eduid_common.authn.testing import TestVCCSClient
 
 
 class VCCSTestCase(MongoTestCase):

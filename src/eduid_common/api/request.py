@@ -45,12 +45,13 @@ of the Flask application::
     >>> app.request_class =  Request
 """
 
-from eduid_common.api.sanitation import SanitationProblem, Sanitizer
 from flask import Request as BaseRequest
 from flask import abort, current_app
 from werkzeug._compat import iteritems, itervalues
 from werkzeug.datastructures import EnvironHeaders, ImmutableMultiDict, ImmutableTypeConversionDict
 from werkzeug.utils import cached_property
+
+from eduid_common.api.sanitation import SanitationProblem, Sanitizer
 
 
 class SanitationMixin(Sanitizer):

@@ -6,9 +6,11 @@ from urllib.parse import urlparse
 from uuid import uuid4
 
 import six
-from eduid_common.api.exceptions import ApiException
-from eduid_userdb.exceptions import EduIDUserDBError, MultipleUsersReturned, UserDBValueError, UserDoesNotExist
 from flask import current_app
+
+from eduid_userdb.exceptions import EduIDUserDBError, MultipleUsersReturned, UserDBValueError, UserDoesNotExist
+
+from eduid_common.api.exceptions import ApiException
 
 
 def get_unique_hash():

@@ -37,8 +37,9 @@ from os import environ
 from typing import Dict, Mapping, Optional
 
 import redis
-from eduid_common.session.redis_session import get_redis_pool
 from flask import Blueprint, current_app, jsonify
+
+from eduid_common.session.redis_session import get_redis_pool
 
 status_views = Blueprint('status', __name__, url_prefix='/status')
 

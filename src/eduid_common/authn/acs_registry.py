@@ -42,8 +42,9 @@ and are called with two positional parameters:
 """
 from typing import Callable
 
-from eduid_common.session import session
 from flask import current_app
+
+from eduid_common.session import session
 
 _actions = {}
 

@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 from typing import List, Optional, Type
 
-from eduid_common.api.app import EduIDBaseApp
+from flask import current_app, render_template
+
 from eduid_userdb.nin import Nin
 from eduid_userdb.proofing import ProofingUser
 from eduid_userdb.proofing.state import NinProofingState
 from eduid_userdb.user import User
-from flask import current_app, render_template
+
+from eduid_common.api.app import EduIDBaseApp
 
 __author__ = 'lundberg'
 

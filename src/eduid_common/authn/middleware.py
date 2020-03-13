@@ -35,14 +35,15 @@ import re
 from typing import Callable, Union
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
+from flask import current_app
+from werkzeug.wrappers import Response
+from werkzeug.wsgi import get_current_url
+
 from eduid_common.api.app import EduIDBaseApp
 from eduid_common.api.utils import urlappend
 from eduid_common.config.base import FlaskConfig
 from eduid_common.session import session
 from eduid_common.session.redis_session import NoSessionDataFoundException
-from flask import current_app
-from werkzeug.wrappers import Response
-from werkzeug.wsgi import get_current_url
 
 no_context_logger = logging.getLogger(__name__)
 

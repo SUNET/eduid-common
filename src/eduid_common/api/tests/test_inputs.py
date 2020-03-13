@@ -34,6 +34,12 @@
 import logging
 from urllib.parse import unquote
 
+from flask import Blueprint, make_response, request
+from marshmallow import ValidationError, fields
+from werkzeug.http import dump_cookie
+
+from eduid_userdb import UserDB
+
 from eduid_common.api.app import EduIDBaseApp
 from eduid_common.api.decorators import UnmarshalWith
 from eduid_common.api.schemas.base import EduidSchema
@@ -41,10 +47,6 @@ from eduid_common.api.schemas.csrf import CSRFRequestMixin
 from eduid_common.api.testing import EduidAPITestCase
 from eduid_common.config.base import FlaskConfig
 from eduid_common.session.eduid_session import SessionFactory
-from eduid_userdb import UserDB
-from flask import Blueprint, make_response, request
-from marshmallow import ValidationError, fields
-from werkzeug.http import dump_cookie
 
 logger = logging.getLogger(__name__)
 

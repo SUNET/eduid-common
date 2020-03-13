@@ -32,12 +32,14 @@
 import logging
 from typing import Optional, Union
 
-import vccs_client
 from bson import ObjectId
-from eduid_common.api.decorators import deprecated
+
+import vccs_client
 from eduid_userdb.credentials import Password
 from eduid_userdb.dashboard import DashboardLegacyUser, DashboardUser
 from eduid_userdb.user import User
+
+from eduid_common.api.decorators import deprecated
 
 logger = logging.getLogger(__name__)
 

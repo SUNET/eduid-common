@@ -3,10 +3,11 @@ import warnings
 from typing import List, Optional
 
 import eduid_msg
+from flask import current_app
+
 from eduid_common.api.app import EduIDBaseApp
 from eduid_common.api.exceptions import MsgTaskFailed
 from eduid_common.config.base import CeleryConfig
-from flask import current_app
 
 __author__ = 'lundberg'
 
@@ -126,7 +127,7 @@ class MsgRelay(object):
         try:
             res = rtask.get(timeout=timeout)
             current_app.logger.debug(
-                f"SENT mobile validator message code: {code} phone number: {targetphone} with " f"reference {reference}"
+                f"SENT mobile validator message code: {code} phone number: {targetphone} with reference {reference}"
             )
             current_app.logger.debug(
                 f"Extra debug: Send message result: {repr(res)},"

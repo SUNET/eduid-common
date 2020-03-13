@@ -35,8 +35,9 @@ from email.mime.text import MIMEText
 from typing import List, Optional
 
 import eduid_msg
-from eduid_common.api.exceptions import MailTaskFailed
 from flask import current_app
+
+from eduid_common.api.exceptions import MailTaskFailed
 
 
 class MailRelay(object):

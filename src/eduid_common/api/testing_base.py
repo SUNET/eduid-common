@@ -37,9 +37,10 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 
+from eduid_userdb.testing import MongoTestCase
+
 from eduid_common.config.testing import EtcdTemporaryInstance
 from eduid_common.config.workers import AmConfig
-from eduid_userdb.testing import MongoTestCase
 
 logger = logging.getLogger(__name__)
 

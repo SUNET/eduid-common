@@ -5,11 +5,12 @@ from typing import AnyStr, List, Mapping, NewType, Optional
 
 import saml2.server
 import six
-from eduid_common.authn import utils
 from saml2.s_utils import UnknownPrincipal, UnknownSystemEntity, UnravelError, UnsupportedBinding
 from saml2.saml import Issuer
 from saml2.samlp import RequestedAuthnContext
 from saml2.sigver import verify_redirect_signature
+
+from eduid_common.authn import utils
 
 ResponseArgs = NewType('ResponseArgs', dict)
 

@@ -40,13 +40,15 @@ from contextlib import contextmanager
 from copy import deepcopy
 from typing import Any, Dict, List, Optional
 
-from eduid_common.api.testing_base import CommonTestCase
-from eduid_common.session import EduidSession
-from eduid_common.session.testing import RedisTemporaryInstance
+from flask.testing import FlaskClient
+
 from eduid_userdb import User
 from eduid_userdb.data_samples import NEW_COMPLETED_SIGNUP_USER_EXAMPLE, NEW_UNVERIFIED_USER_EXAMPLE, NEW_USER_EXAMPLE
 from eduid_userdb.db import BaseDB
-from flask.testing import FlaskClient
+
+from eduid_common.api.testing_base import CommonTestCase
+from eduid_common.session import EduidSession
+from eduid_common.session.testing import RedisTemporaryInstance
 
 logger = logging.getLogger(__name__)
 

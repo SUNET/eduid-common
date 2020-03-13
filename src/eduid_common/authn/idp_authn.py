@@ -41,12 +41,13 @@ import datetime
 from typing import Dict, Optional
 
 import vccs_client
-from eduid_common.api import exceptions
-from eduid_common.authn import get_vccs_client
 from eduid_userdb import MongoDB
 from eduid_userdb.credentials import Credential, Password
 from eduid_userdb.exceptions import UserHasNotCompletedSignup
 from eduid_userdb.idp import IdPUser
+
+from eduid_common.api import exceptions
+from eduid_common.authn import get_vccs_client
 
 
 class AuthnData(object):

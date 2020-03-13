@@ -6,13 +6,14 @@ import inspect
 import warnings
 from functools import wraps
 
-from eduid_common.api.schemas.models import FluxFailResponse, FluxResponseStatus, FluxSuccessResponse
-from eduid_common.api.utils import get_user
-from eduid_common.session import session
 from flask import abort, current_app, jsonify, request
 from marshmallow.exceptions import ValidationError
 from six import string_types
 from werkzeug.wrappers import Response as WerkzeugResponse
+
+from eduid_common.api.schemas.models import FluxFailResponse, FluxResponseStatus, FluxSuccessResponse
+from eduid_common.api.utils import get_user
+from eduid_common.session import session
 
 __author__ = 'lundberg'
 

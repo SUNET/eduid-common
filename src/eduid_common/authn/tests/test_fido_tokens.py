@@ -37,15 +37,17 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import cast
 
+from flask import Blueprint, current_app, request
+from mock import patch
+
+from eduid_userdb import User
+from eduid_userdb.credentials import U2F, Webauthn
+from eduid_userdb.data_samples import NEW_USER_EXAMPLE
+
 from eduid_common.api.app import EduIDBaseApp
 from eduid_common.api.testing import EduidAPITestCase
 from eduid_common.authn.fido_tokens import VerificationProblem, start_token_verification, verify_webauthn
 from eduid_common.config.base import FlaskConfig
-from eduid_userdb import User
-from eduid_userdb.credentials import U2F, Webauthn
-from eduid_userdb.data_samples import NEW_USER_EXAMPLE
-from flask import Blueprint, current_app, request
-from mock import patch
 
 
 @dataclass

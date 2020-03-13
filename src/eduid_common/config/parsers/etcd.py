@@ -7,6 +7,7 @@ import logging
 import os
 
 import etcd
+
 from eduid_common.config.parsers.decorators import decrypt, interpolate
 from eduid_common.config.parsers.exceptions import ParserException
 

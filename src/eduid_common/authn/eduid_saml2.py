@@ -35,13 +35,13 @@ import pprint
 from typing import Mapping
 from xml.etree.ElementTree import ParseError
 
-from eduid_common.session import EduidSession
 from saml2 import BINDING_HTTP_POST, BINDING_HTTP_REDIRECT
 from saml2.client import Saml2Client
 from saml2.response import UnsolicitedResponse
 
 from .cache import IdentityCache, OutstandingQueriesCache
 from .utils import SPConfig, get_saml_attribute
+from eduid_common.session import EduidSession
 
 logger = logging.getLogger(__name__)
 

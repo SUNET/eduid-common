@@ -7,13 +7,14 @@ from collections.abc import MutableMapping
 from time import time
 from typing import TYPE_CHECKING, Optional
 
+from flask import current_app
+from flask import request as flask_request
+from flask.sessions import SessionInterface, SessionMixin
+
 from eduid_common.config.exceptions import BadConfiguration
 from eduid_common.session.logindata import SSOLoginData
 from eduid_common.session.namespaces import Actions, Common, MfaAction, ResetPasswordNS, SessionNSBase, Signup
 from eduid_common.session.redis_session import RedisEncryptedSession, SessionManager
-from flask import current_app
-from flask import request as flask_request
-from flask.sessions import SessionInterface, SessionMixin
 
 # From https://stackoverflow.com/a/39757388
 # The TYPE_CHECKING constant is always False at runtime, so the import won't be evaluated, but mypy

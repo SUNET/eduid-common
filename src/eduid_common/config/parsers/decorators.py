@@ -5,8 +5,9 @@ from functools import wraps
 from string import Template
 from typing import Mapping, Optional
 
-from eduid_common.config.parsers.exceptions import SecretKeyException
 from nacl import encoding, exceptions, secret
+
+from eduid_common.config.parsers.exceptions import SecretKeyException
 
 __author__ = 'lundberg'
 

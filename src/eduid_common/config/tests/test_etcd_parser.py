@@ -4,11 +4,12 @@ from __future__ import absolute_import
 
 import unittest
 
+from mock import patch
+from nacl import encoding, secret
+
 from eduid_common.config.parsers import decorators
 from eduid_common.config.parsers.etcd import EtcdConfigParser
 from eduid_common.config.testing import EtcdTemporaryInstance
-from mock import patch
-from nacl import encoding, secret
 
 __author__ = 'lundberg'
 

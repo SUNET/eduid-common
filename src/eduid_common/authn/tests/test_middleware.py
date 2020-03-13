@@ -32,10 +32,11 @@
 
 from contextlib import contextmanager
 
+from werkzeug.exceptions import NotFound
+
 from eduid_common.api.testing import EduidAPITestCase
 from eduid_common.authn.middleware import AuthnBaseApp
 from eduid_common.config.base import FlaskConfig
-from werkzeug.exceptions import NotFound
 
 
 class AuthnTests(EduidAPITestCase):
