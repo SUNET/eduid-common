@@ -33,17 +33,16 @@
 import logging
 import re
 from typing import Callable, Union
-
-from flask import current_app
-from urllib.parse import urlparse, urlunparse, urlencode, parse_qs
-from werkzeug.wrappers import Response
-from werkzeug.wsgi import get_current_url
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from eduid_common.api.app import EduIDBaseApp
 from eduid_common.api.utils import urlappend
 from eduid_common.config.base import FlaskConfig
 from eduid_common.session import session
 from eduid_common.session.redis_session import NoSessionDataFoundException
+from flask import current_app
+from werkzeug.wrappers import Response
+from werkzeug.wsgi import get_current_url
 
 no_context_logger = logging.getLogger(__name__)
 
@@ -53,6 +52,7 @@ class AuthnBaseApp(EduIDBaseApp):
     WSGI middleware that checks whether the request is authenticated,
     and in case it isn't, redirects to the authn service.
     """
+
     def __call__(self, environ: dict, start_response: Callable) -> Union[Response, list]:
         next_url = get_current_url(environ)
         next_path = list(urlparse(next_url))[2]
@@ -85,6 +85,6 @@ class AuthnBaseApp(EduIDBaseApp):
         url_parts[4] = urlencode(query)
         location = urlunparse(url_parts)
 
-        headers = [ ('Location', location) ]
+        headers = [('Location', location)]
         start_response('302 Found', headers)
         return []

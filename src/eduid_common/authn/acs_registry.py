@@ -42,9 +42,8 @@ and are called with two positional parameters:
 """
 from typing import Callable
 
-from flask import current_app
-
 from eduid_common.session import session
+from flask import current_app
 
 _actions = {}
 
@@ -60,12 +59,15 @@ def acs_action(action_key):
     :param action_key: the key for the given action
     :type action_key: str
     """
+
     def outer(func):
         _actions[action_key] = func
 
         def inner(*args, **kwargs):
             return func(*args, **kwargs)
+
         return inner
+
     return outer
 
 

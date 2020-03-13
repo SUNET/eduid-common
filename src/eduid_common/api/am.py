@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import eduid_am
-from flask import current_app
-
 from eduid_common.api.app import EduIDBaseApp
 from eduid_common.api.exceptions import AmTaskFailed
 from eduid_common.config.base import CeleryConfig
 from eduid_userdb import User
 from eduid_userdb.exceptions import LockedIdentityViolation
+from flask import current_app
 
 __author__ = 'lundberg'
 
@@ -23,7 +22,6 @@ def init_relay(app: EduIDBaseApp, application_name: str) -> EduIDBaseApp:
 
 
 class AmRelay(object):
-
     def __init__(self, config: CeleryConfig, relay_for: str):
         """
         :param config: celery config
@@ -34,6 +32,7 @@ class AmRelay(object):
         eduid_am.init_app(config)
         # these have to be imported _after_ eduid_am.init_app()
         from eduid_am.tasks import update_attributes_keep_result, pong
+
         self._update_attrs = update_attributes_keep_result
         self._pong = pong
 

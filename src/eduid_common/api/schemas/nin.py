@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from marshmallow import fields
 from eduid_common.api.schemas.base import EduidSchema
+from marshmallow import fields
 
 __author__ = 'lundberg'
 

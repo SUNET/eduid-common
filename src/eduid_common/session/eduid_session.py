@@ -1,9 +1,9 @@
-
 # From https://stackoverflow.com/a/39757388
 # The TYPE_CHECKING constant is always False at runtime, so the import won't be evaluated, but mypy
 # (and other type-checking tools) will evaluate the contents of that block.
 from __future__ import annotations
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from eduid_common.api.app import EduIDBaseApp
 
@@ -220,15 +220,16 @@ class EduidSession(SessionMixin, MutableMapping):
         cookie_httponly = self.app.config.get('session_cookie_httponly')
         cookie_samesite = self.app.config.get('session_cookie_samesite')
         max_age = int(self.app.config.get('permanent_session_lifetime'))
-        response.set_cookie(cookie_name,
-                            value=self.token,
-                            domain=cookie_domain,
-                            path=cookie_path,
-                            secure=cookie_secure,
-                            httponly=cookie_httponly,
-                            samesite=cookie_samesite,
-                            max_age=max_age
-                            )
+        response.set_cookie(
+            cookie_name,
+            value=self.token,
+            domain=cookie_domain,
+            path=cookie_path,
+            secure=cookie_secure,
+            httponly=cookie_httponly,
+            samesite=cookie_samesite,
+            max_age=max_age,
+        )
 
     def new_csrf_token(self):
         """

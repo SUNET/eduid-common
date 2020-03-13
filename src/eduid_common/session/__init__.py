@@ -31,8 +31,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-from flask import session as flask_session
 from eduid_common.session.eduid_session import EduidSession
+from flask import session as flask_session
 
 
 # Ugly hack to get make type checks/hints to work

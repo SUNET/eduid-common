@@ -2,12 +2,11 @@
 
 import logging
 from functools import wraps
-from typing import Optional, Mapping
-
-from nacl import secret, encoding, exceptions
 from string import Template
+from typing import Mapping, Optional
 
 from eduid_common.config.parsers.exceptions import SecretKeyException
+from nacl import encoding, exceptions, secret
 
 __author__ = 'lundberg'
 
@@ -68,8 +67,9 @@ def decrypt_config(config_dict: Mapping) -> Mapping:
                         continue  # Try next key
                 try:
                     encrypted_value = bytes(encrypted_value, 'ascii')
-                    decrypted_value = boxes[key_name].decrypt(encrypted_value,
-                                                              encoder=encoding.URLSafeBase64Encoder).decode('utf-8')
+                    decrypted_value = (
+                        boxes[key_name].decrypt(encrypted_value, encoder=encoding.URLSafeBase64Encoder).decode('utf-8')
+                    )
                     new_config_dict[key[:-10]] = decrypted_value
                     decrypted = True
                     break  # Decryption successful, do not try any more keys
