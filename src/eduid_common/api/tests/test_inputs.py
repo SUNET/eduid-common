@@ -32,18 +32,17 @@
 #
 
 import logging
+from typing import Any, Dict
 from urllib.parse import unquote
 
-from eduid_userdb import UserDB
-from flask import Blueprint
-from flask import make_response
-from flask import request
-from marshmallow import fields, ValidationError
+from flask import Blueprint, make_response, request
+from marshmallow import ValidationError, fields
 from werkzeug.http import dump_cookie
+
+from eduid_userdb import UserDB
 
 from eduid_common.api.app import EduIDBaseApp
 from eduid_common.api.decorators import UnmarshalWith
-from eduid_common.api.request import Request
 from eduid_common.api.schemas.base import EduidSchema
 from eduid_common.api.schemas.csrf import CSRFRequestMixin
 from eduid_common.api.testing import EduidAPITestCase
@@ -57,6 +56,7 @@ __author__ = 'lundberg'
 
 def dont_validate(value):
     raise ValidationError('Problem with {!r}'.format(value))
+
 
 class NonValidatingSchema(EduidSchema, CSRFRequestMixin):
     test_data = fields.String(required=True, validate=dont_validate)
@@ -73,6 +73,7 @@ def _make_response(data):
     response = make_response(html, 200)
     response.headers['Content-Type'] = "text/html; charset=utf8"
     return response
+
 
 @test_views.route('/test-get-param', methods=['GET'])
 def get_param_view():
@@ -98,10 +99,12 @@ def cookie_view():
     cookie = request.cookies.get('test-cookie')
     return _make_response(cookie)
 
+
 @test_views.route('/test-empty-session')
 def empty_session_view():
     cookie = request.cookies.get('sessid')
     return _make_response(cookie)
+
 
 @test_views.route('/test-header')
 def header_view():
@@ -115,8 +118,13 @@ def values_view():
     return _make_response(param)
 
 
-class InputsTests(EduidAPITestCase):
+class InputsTestApp(EduIDBaseApp):
+    def __init__(self, name: str, config: Dict[str, Any], **kwargs):
+        self.config = FlaskConfig.init_config(ns='webapp', app_name=name, test_config=config)
+        super().__init__(name, **kwargs)
 
+
+class InputsTests(EduidAPITestCase):
     def update_config(self, config):
         """
         Called from the parent class, so that we can update the configuration
@@ -129,7 +137,7 @@ class InputsTests(EduidAPITestCase):
         Called from the parent class, so we can provide the appropriate flask
         app for this test case.
         """
-        app = EduIDBaseApp('test.localhost', FlaskConfig, config)
+        app = InputsTestApp('testing', config)
         app.register_blueprint(test_views)
         app.central_userdb = UserDB(app.config.mongo_uri, 'eduid_am')
         app.session_interface = SessionFactory(app.config)
@@ -184,24 +192,25 @@ class InputsTests(EduidAPITestCase):
     def test_post_param_script(self):
         """"""
         url = '/test-post-param'
-        with self.app.test_request_context(url, method='POST',
-                data={'test-param': '<script>alert("ho")</script>'}):
+        with self.app.test_request_context(url, method='POST', data={'test-param': '<script>alert("ho")</script>'}):
 
             response = self.app.dispatch_request()
             self.assertNotIn(b'<script>', response.data)
 
     def test_post_param_script_percent_encoded(self):
         url = '/test-post-param'
-        with self.app.test_request_context(url, method='POST',
-                data={'test-param': '%3Cscript%3Ealert%28%22ho%22%29%3C%2Fscript%3E'}):
+        with self.app.test_request_context(
+            url, method='POST', data={'test-param': '%3Cscript%3Ealert%28%22ho%22%29%3C%2Fscript%3E'}
+        ):
 
             response = self.app.dispatch_request()
             self.assertNotIn(b'<script>', response.data)
 
     def test_post_param_script_percent_encoded_twice(self):
         url = '/test-post-param'
-        with self.app.test_request_context(url, method='POST',
-                data={'test-param': b'%253Cscript%253Ealert%2528%2522ho%2522%2529%253C%252Fscript%253E'}):
+        with self.app.test_request_context(
+            url, method='POST', data={'test-param': b'%253Cscript%253Ealert%2528%2522ho%2522%2529%253C%252Fscript%253E'}
+        ):
 
             response = self.app.dispatch_request()
             unquoted_response = unquote(response.data.decode('ascii'))
@@ -211,14 +220,17 @@ class InputsTests(EduidAPITestCase):
     def test_post_json_script(self):
         """"""
         url = '/test-post-json'
-        with self.app.test_request_context(url, method='POST',
-                content_type='application/json',
-                headers={
-                    "X-Requested-With": "XMLHttpRequest",
-                    "Host": "test.localhost",
-                    "Origin": "http://test.localhost",
-                },
-                data='{"test_data": "<script>alert(42)</script>", "csrf_token": "failing-token"}'):
+        with self.app.test_request_context(
+            url,
+            method='POST',
+            content_type='application/json',
+            headers={
+                "X-Requested-With": "XMLHttpRequest",
+                "Host": "test.localhost",
+                "Origin": "http://test.localhost",
+            },
+            data='{"test_data": "<script>alert(42)</script>", "csrf_token": "failing-token"}',
+        ):
 
             response = self.app.dispatch_request()
             self.assertNotIn(b'<script>', response.data)
@@ -227,8 +239,7 @@ class InputsTests(EduidAPITestCase):
         """"""
         url = '/test-cookie'
         cookie = dump_cookie('test-cookie', '<script>alert("ho")</script>')
-        with self.app.test_request_context(url, method='GET',
-                                           headers={'Cookie': cookie}):
+        with self.app.test_request_context(url, method='GET', headers={'Cookie': cookie}):
 
             response = self.app.dispatch_request()
             self.assertNotIn(b'<script>', response.data)
@@ -237,8 +248,7 @@ class InputsTests(EduidAPITestCase):
         """"""
         url = '/test-header'
         script = '<script>alert("ho")</script>'
-        with self.app.test_request_context(url, method='GET',
-                                           headers={'X-TEST': script}):
+        with self.app.test_request_context(url, method='GET', headers={'X-TEST': script}):
 
             response = self.app.dispatch_request()
             self.assertNotIn(b'<script>', response.data)
@@ -254,8 +264,7 @@ class InputsTests(EduidAPITestCase):
     def test_post_values_script(self):
         """"""
         url = '/test-values'
-        with self.app.test_request_context(url, method='POST',
-                data={'test-param': '<script>alert("ho")</script>'}):
+        with self.app.test_request_context(url, method='POST', data={'test-param': '<script>alert("ho")</script>'}):
 
             response = self.app.dispatch_request()
             self.assertNotIn(b'<script>', response.data)
@@ -264,8 +273,7 @@ class InputsTests(EduidAPITestCase):
         """Test sending an empty sessid cookie"""
         url = '/test-empty-session'
         cookie = dump_cookie('sessid', '')
-        with self.app.test_request_context(url, method='GET',
-                                           headers={'Cookie': cookie}):
+        with self.app.test_request_context(url, method='GET', headers={'Cookie': cookie}):
 
             # This is a regression test for the bug that would crash the
             # application before when someone sent an empty sessid cookie.

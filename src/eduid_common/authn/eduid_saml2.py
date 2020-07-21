@@ -32,14 +32,23 @@
 
 import logging
 import pprint
+from typing import Mapping
 from xml.etree.ElementTree import ParseError
 
+from flask import abort, redirect, request
 from saml2 import BINDING_HTTP_POST, BINDING_HTTP_REDIRECT
 from saml2.client import Saml2Client
-from saml2.response import UnsolicitedResponse
+from saml2.ident import decode
+from saml2.response import LogoutResponse, UnsolicitedResponse
+from werkzeug.wrappers import Response
 
-from .cache import IdentityCache, OutstandingQueriesCache
+from eduid_userdb.user import User
+
+from .cache import IdentityCache, OutstandingQueriesCache, StateCache
 from .utils import SPConfig, get_saml_attribute
+from eduid_common.api.app import EduIDBaseApp
+from eduid_common.api.utils import verify_relay_state
+from eduid_common.session import EduidSession, session
 
 logger = logging.getLogger(__name__)
 
@@ -69,8 +78,9 @@ def get_authn_ctx(session_info):
         return None
 
 
-def get_authn_request(saml2_config: SPConfig, session, came_from, selected_idp,
-                      force_authn=False, sign_alg=None, digest_alg=None):
+def get_authn_request(
+    saml2_config: SPConfig, session, came_from, selected_idp, force_authn=False, sign_alg=None, digest_alg=None
+):
     kwargs = {
         "force_authn": str(force_authn).lower(),
     }
@@ -85,10 +95,7 @@ def get_authn_request(saml2_config: SPConfig, session, came_from, selected_idp,
 
     try:
         (session_id, info) = client.prepare_for_authenticate(
-            entityid=selected_idp,
-            relay_state=came_from,
-            binding=BINDING_HTTP_REDIRECT,
-            **kwargs
+            entityid=selected_idp, relay_state=came_from, binding=BINDING_HTTP_REDIRECT, **kwargs
         )
     except TypeError:
         logger.error('Unable to know which IdP to use')
@@ -99,31 +106,44 @@ def get_authn_request(saml2_config: SPConfig, session, came_from, selected_idp,
     return info
 
 
-def get_authn_response(saml2_config: SPConfig, session, raw_response):
+def get_authn_response(saml2_config: SPConfig, session: EduidSession, raw_response) -> Mapping:
+    """
+    Check a SAML response and return the 'session_info' pysaml2 dict.
 
-    client = Saml2Client(saml2_config,
-                         identity_cache=IdentityCache(session))
+    Example session_info:
+
+    {'authn_info': [('urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport', [],
+                     '2019-06-17T00:00:01Z')],
+     'ava': {'eduPersonPrincipalName': ['eppn@eduid.se'],
+             'eduidIdPCredentialsUsed': ['...']},
+     'came_from': 'https://dashboard.eduid.se/profile/personaldata',
+     'issuer': 'https://login.idp.eduid.se/idp.xml',
+     'name_id': <saml2.saml.NameID object>,
+     'not_on_or_after': 156000000,
+     'session_index': 'id-foo'}
+    """
+    client = Saml2Client(saml2_config, identity_cache=IdentityCache(session))
 
     oq_cache = OutstandingQueriesCache(session)
     outstanding_queries = oq_cache.outstanding_queries()
 
     try:
         # process the authentication response
-        response = client.parse_authn_request_response(raw_response,
-                                                       BINDING_HTTP_POST,
-                                                       outstanding_queries)
+        response = client.parse_authn_request_response(raw_response, BINDING_HTTP_POST, outstanding_queries)
     except AssertionError:
         logger.error('SAML response is not verified')
         raise BadSAMLResponse(
             """SAML response is not verified. May be caused by the response
             was not issued at a reasonable time or the SAML status is not ok.
-            Check the IDP datetime setup""")
+            Check the IDP datetime setup"""
+        )
     except ParseError as e:
         logger.error('SAML response is not correctly formatted: {!r}'.format(e))
         raise BadSAMLResponse(
             """SAML response is not correctly formatted and therefore the
             XML document could not be parsed.
-            """)
+            """
+        )
     except UnsolicitedResponse as e:
         logger.exception('Unsolicited SAML response')
         # Extra debug to try and find the cause for some of these that seem to be incorrect
@@ -134,8 +154,7 @@ def get_authn_response(saml2_config: SPConfig, session, raw_response):
 
     if response is None:
         logger.error('SAML response is None')
-        raise BadSAMLResponse(
-            "SAML response has errors. Please check the logs")
+        raise BadSAMLResponse("SAML response has errors. Please check the logs")
 
     session_id = response.session_id()
     oq_cache.delete(session_id)
@@ -169,12 +188,12 @@ def authenticate(app, session_info):
 
     saml_user = attribute_values[0]
 
-    # eduPersonPrincipalName might be scoped and the scope (e.g. "@example.com") 
+    # eduPersonPrincipalName might be scoped and the scope (e.g. "@example.com")
     # might have to be removed before looking for the user in the database.
     strip_suffix = app.config.get('SAML2_STRIP_SAML_USER_SUFFIX', '')
     if strip_suffix:
         if saml_user.endswith(strip_suffix):
-            saml_user = saml_user[:-len(strip_suffix)]
+            saml_user = saml_user[: -len(strip_suffix)]
 
     logger.debug('Looking for user with eduPersonPrincipalName == {!r}'.format(saml_user))
     try:
@@ -186,3 +205,42 @@ def authenticate(app, session_info):
     else:
         return user
     return None
+
+
+def saml_logout(current_app: EduIDBaseApp, user: User, location: str) -> Response:
+    """
+    SAML Logout Request initiator.
+    This function initiates the SAML2 Logout request
+    using the pysaml2 library to create the LogoutRequest.
+    """
+    state = StateCache(session)
+    identity = IdentityCache(session)
+
+    client = Saml2Client(current_app.saml2_config, state_cache=state, identity_cache=identity)
+
+    try:
+        subject_id = decode(session['_saml2_session_name_id'])
+    except KeyError:
+        current_app.logger.warning('The session does not contain the subject id for user {user}')
+        session.invalidate()
+        current_app.logger.info(f'Redirection user to user {location}')
+        return redirect(location)
+
+    session.invalidate()
+    current_app.logger.info(f'Invalidated session for {user}')
+
+    logouts = client.global_logout(subject_id)
+    loresponse = list(logouts.values())[0]
+    # loresponse is a dict for REDIRECT binding, and LogoutResponse for SOAP binding
+    if isinstance(loresponse, LogoutResponse):
+        if loresponse.status_ok():
+            location = verify_relay_state(request.form.get('RelayState', location), location)
+            return redirect(location)
+        else:
+            abort(500)
+
+    headers_tuple = loresponse[1]['headers']
+    location = headers_tuple[0][1]
+    current_app.logger.info(f"Redirecting {user} to {location} after successful logout")
+    state.sync()
+    return redirect(location)

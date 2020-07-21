@@ -1,19 +1,18 @@
-from unittest import TestCase
-
 import time
+from unittest import TestCase
 
 from eduid_common.session.redis_session import RedisEncryptedSession, derive_key
 
 
 class FakeRedisConn(object):
-
     def __init__(self):
         self._data = {}
 
     def setex(self, key, ttl, data):
-        self._data[key] = {'expire': int(time.time()) + ttl,
-                           'data': data,
-                           }
+        self._data[key] = {
+            'expire': int(time.time()) + ttl,
+            'data': data,
+        }
 
     def get(self, key):
         res = self._data.get(key)
@@ -27,12 +26,11 @@ class FakeRedisConn(object):
 
 
 class TestSession(TestCase):
-
     def setUp(self):
         self.conn = FakeRedisConn()
         try:
             # Detect too old Python (like on CI) and skip tests
-            _x = derive_key('unittest', 'session', 'test', 16)
+            derive_key('unittest', 'session', 'test', 16)
         except AttributeError:
             self.skipTest('Python hashlib does not contain pbkdf2')
 
@@ -51,7 +49,7 @@ class TestSession(TestCase):
         # The ValueError is caught in the SessionFactory and triggers
         # the creation of a new, empty session.
         with self.assertRaises(ValueError):
-            session1 = self._get_session(token=None, data=None)
+            self._get_session(token=None, data=None)
 
     def test_clear_session(self):
         """ Test creating a session, clearing it and verifying it is gone """
@@ -75,11 +73,16 @@ class TestSession(TestCase):
         """ Pysaml uses the token as an XML NCName so it can't contain some characters. """
         for i in range(1024):
             session = self._get_session(data={'foo': 'bar'})
-            self.assertRegexpMatches(session.token, '^[a-z][a-zA-Z0-9.]+$')
+            self.assertRegex(session.token, '^[a-z][a-zA-Z0-9.]+$')
 
-    def _get_session(self, token=None, data=None, secret='s3cr3t', ttl=10,
-                     whitelist=None, raise_on_unknown=False):
-        session = RedisEncryptedSession(self.conn, token=token, data=data,
-                                        secret=secret, ttl=ttl, whitelist=whitelist,
-                                        raise_on_unknown=raise_on_unknown)
+    def _get_session(self, token=None, data=None, secret='s3cr3t', ttl=10, whitelist=None, raise_on_unknown=False):
+        session = RedisEncryptedSession(
+            self.conn,
+            token=token,
+            data=data,
+            secret=secret,
+            ttl=ttl,
+            whitelist=whitelist,
+            raise_on_unknown=raise_on_unknown,
+        )
         return session

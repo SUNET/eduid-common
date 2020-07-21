@@ -33,18 +33,25 @@
 
 from __future__ import absolute_import
 
-import sys
-import os.path
-import six
 import importlib.util
 import logging
+import os.path
+import sys
 import time
+from typing import TYPE_CHECKING, Any, List, Mapping, Optional, Sequence
 
+import six
 from pwgen import pwgen
-from saml2.config import SPConfig
 from saml2 import server
+from saml2.config import SPConfig
 
 from eduid_common.api.utils import urlappend
+
+# From https://stackoverflow.com/a/39757388
+# The TYPE_CHECKING constant is always False at runtime, so the import won't be evaluated, but mypy
+# (and other type-checking tools) will evaluate the contents of that block.
+if TYPE_CHECKING:
+    from eduid_common.api.app import EduIDBaseApp
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +78,7 @@ def get_location(http_info):
     return header_value
 
 
-def get_saml_attribute(session_info, attr_name):
+def get_saml_attribute(session_info: Mapping[str, Any], attr_name: str) -> Optional[List[str]]:
     """
     Get value from a SAML attribute received from the SAML IdP.
 
@@ -88,7 +95,7 @@ def get_saml_attribute(session_info, attr_name):
     :type attr_name: string()
     :rtype: [string()]
     """
-    if not 'ava' in session_info:
+    if 'ava' not in session_info:
         raise ValueError('SAML attributes (ava) not found in session_info')
 
     attributes = session_info['ava']
@@ -99,14 +106,13 @@ def get_saml_attribute(session_info, attr_name):
     for saml_attr, _ in attributes.items():
         if saml_attr.lower() == attr_name.lower():
             return attributes[saml_attr]
+    return None
 
 
-def no_authn_views(app, paths):
+def no_authn_views(app: 'EduIDBaseApp', paths: Sequence[str]):
     """
     :param app: Flask app
-    :type app: flask.Flask
     :param paths: Paths that does not require authentication
-    :type paths: list
 
     :return: Flask app
     :rtype: flask.Flask
@@ -136,6 +142,7 @@ def check_previous_identification(session_ns):
     :return: The eppn in case the check is successful, None otherwise
     """
     from eduid_common.session import session
+
     eppn = session.common.eppn
     if eppn is None:
         eppn = session.get('user_eppn', None)
@@ -148,8 +155,7 @@ def check_previous_identification(session_ns):
     now = int(time.time())
     ts = timestamp.timestamp()
     if (ts < now - 300) or (ts > now + 900):
-        logger.debug('Auth token timestamp {} out of bounds ({} seconds from {})'.format(
-            timestamp, ts - now, now))
+        logger.debug('Auth token timestamp {} out of bounds ({} seconds from {})'.format(timestamp, ts - now, now))
         return None
     return eppn
 
@@ -173,6 +179,7 @@ def maybe_xml_to_string(message, logger=None):
     message = str(message)
     try:
         from defusedxml import ElementTree as DefusedElementTree
+
         parser = DefusedElementTree.DefusedXMLParser()
         xml = DefusedElementTree.XML(message, parser)
         return DefusedElementTree.tostring(xml)

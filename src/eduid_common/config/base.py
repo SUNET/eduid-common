@@ -36,10 +36,13 @@ Configuration (file) handling for eduID IdP.
 
 from __future__ import annotations
 
+import importlib.util
+import logging
 import os
 from dataclasses import dataclass, field, fields
-import logging
-from typing import Optional, List, Dict, Any, Mapping
+from typing import Any, Dict, List, Mapping, Optional, Type, TypeVar
+
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -47,8 +50,9 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CeleryConfig:
     """
-    Celery configuration 
+    Celery configuration
     """
+
     accept_content: List[str] = field(default_factory=lambda: ["application/json"])
     broker_url: str = ''
     result_backend: str = 'cache'
@@ -60,10 +64,13 @@ class CeleryConfig:
     # backwards incompatible setting that the documentation says will be the default in the future
     broker_transport: str = ''
     broker_transport_options: dict = field(default_factory=lambda: {"fanout_prefix": True})
-    task_routes: dict = field(default_factory=lambda: {
-      'eduid_am.*': {'queue': 'am'},
-      'eduid_msg.*': {'queue': 'msg'},
-      'eduid_letter_proofing.*': {'queue': 'letter_proofing'}})
+    task_routes: dict = field(
+        default_factory=lambda: {
+            'eduid_am.*': {'queue': 'am'},
+            'eduid_msg.*': {'queue': 'msg'},
+            'eduid_letter_proofing.*': {'queue': 'letter_proofing'},
+        }
+    )
     mongo_uri: Optional[str] = None
 
 
@@ -72,6 +79,7 @@ class CommonConfig:
     """
     Configuration common to all web apps and celery workers
     """
+
     devel_mode: bool = False
     # mongo uri
     mongo_uri: Optional[str] = None
@@ -157,15 +165,24 @@ class CommonConfig:
         """
         get a dict with the default values for all configuration keys
         """
-        return {key: val for key, val in cls.__dict__.items()
-                  if isinstance(key, str) and not key.startswith('_') and not callable(val)}
+        return {
+            key: val
+            for key, val in cls.__dict__.items()
+            if isinstance(key, str) and not key.startswith('_') and not callable(val)
+        }
 
     def to_dict(self) -> dict:
         """
         get a dict with all configured values
         """
-        return {key: val for key, val in self.__dict__.items()
-                  if isinstance(key, str) and not key.startswith('_') and not callable(val)}
+        return {
+            key: val
+            for key, val in self.__dict__.items()
+            if isinstance(key, str) and not key.startswith('_') and not callable(val)
+        }
+
+
+TBaseConfigSubclass = TypeVar('TBaseConfigSubclass', bound='BaseConfig')
 
 
 @dataclass
@@ -175,6 +192,7 @@ class BaseConfig(CommonConfig):
     "eduid/webapp/common" namespace in etcd - excluding Flask's own
     configuration
     """
+
     debug: bool = False
     # These below are configuration keys used in the webapps, common to most
     # or at least to several of them.
@@ -186,7 +204,7 @@ class BaseConfig(CommonConfig):
     eduid_static_url: str = 'https://www.eduid.se/static/'
     safe_relay_domain: str = 'eduid.se'
     # environment=(dev|staging|pro)
-    environment: str = 'dev'
+    environment: str = 'pro'
     development: bool = False
     # enable disable debug mode
     logging_config: dict = field(default_factory=dict)
@@ -195,8 +213,8 @@ class BaseConfig(CommonConfig):
     log_max_bytes: int = 1000000  # 1 MB
     log_backup_count: int = 10  # 10 x 1 MB
     log_format: str = '%(asctime)s | %(levelname)s | %(hostname)s | %(name)s | %(module)s | %(eppn)s | %(message)s'
-    log_type: List[str] = field(default_factory=lambda:['stream'])
-    logger : Optional[logging.Logger] = None
+    log_type: List[str] = field(default_factory=lambda: ['stream'])
+    logger: Optional[logging.Logger] = None
     # Redis config
     # The Redis host to use for session storage.
     redis_host: Optional[str] = None
@@ -224,14 +242,8 @@ class BaseConfig(CommonConfig):
     msg_broker_url: str = ''
     teleadress_client_user: str = ''
     teleadress_client_password: str = ''
-    available_languages: Dict[str, str] = field(default_factory=lambda: {
-        'en': 'English',
-        'sv': 'Svenska'
-        })
-    supported_languages: Dict[str, str] = field(default_factory=lambda: {
-        'en': 'English',
-        'sv': 'Svenska'
-        })
+    available_languages: Dict[str, str] = field(default_factory=lambda: {'en': 'English', 'sv': 'Svenska'})
+    supported_languages: Dict[str, str] = field(default_factory=lambda: {'en': 'English', 'sv': 'Svenska'})
     mail_default_from: str = 'no-reply@eduid.se'
     static_url: str = ''
     dashboard_url: str = ''
@@ -252,15 +264,9 @@ class BaseConfig(CommonConfig):
     # for these URLs will be served, rather than redirected to the authn service.
     # The list is a list of regex that are matched against the path of the
     # requested URL ex. ^/test$.
-    no_authn_urls: list = field(default_factory=lambda: [
-        "^/status/healthy$",
-        "^/status/sanity-check$"
-        ])
+    no_authn_urls: list = field(default_factory=lambda: ["^/status/healthy$", "^/status/sanity-check$"])
     # The plugins for pre-authentication actions that need to be loaded
-    action_plugins: list = field(default_factory=lambda: [
-        "tou",
-        "mfa"
-        ])
+    action_plugins: list = field(default_factory=lambda: ["tou", "mfa"])
     # The current version of the terms of use agreement.
     tou_version: str = '2017-v6'
     current_tou_version: str = '2017-v6'  # backwards compat
@@ -270,32 +276,52 @@ class BaseConfig(CommonConfig):
     stats_port: int = 8125
     sentry_dsn: Optional[str] = None
     status_cache_seconds: int = 10
+    # code to set in a "magic" cookie to bypass various verifications.
+    magic_cookie: Optional[str] = None
+    # name of the magic cookie
+    magic_cookie_name: Optional[str] = None
 
     @classmethod
-    def init_config(cls, superns: str = 'webapp',
-                    test_config: Optional[dict] = None, debug: bool = True) -> BaseConfig:
+    def init_config(
+        cls: Type[TBaseConfigSubclass],
+        ns: Optional[str] = None,
+        app_name: Optional[str] = None,
+        test_config: Optional[dict] = None,
+        debug: bool = False,
+    ) -> TBaseConfigSubclass:
         """
         Initialize configuration with values from etcd (or with test values)
         """
         config: Dict[str, Any] = {
-                'debug': debug,
-                }
+            'debug': debug,
+        }
         if test_config:
             # Load init time settings
             config.update(test_config)
-        else:
-            from eduid_common.config.parsers.etcd import EtcdConfigParser
+            logger.info(f'Using test_config: {config}')
+            return cls(**config)
 
-            common_namespace = os.environ.get('EDUID_CONFIG_COMMON_NS', f'/eduid/{superns}/common/')
-            common_parser = EtcdConfigParser(common_namespace)
-            common_config = common_parser.read_configuration(silent=True)
-            config.update(common_config)
+        from eduid_common.config.parsers.etcd import EtcdConfigParser
 
-            namespace = os.environ.get('EDUID_CONFIG_NS', f'/eduid/{superns}/{cls.app_name}/')
-            parser = EtcdConfigParser(namespace)
-            # Load optional app specific settings
-            proper_config = parser.read_configuration(silent=True)
-            config.update(proper_config)
+        common_namespace = os.environ.get('EDUID_CONFIG_COMMON_NS', f'/eduid/{ns}/common/')
+        common_parser = EtcdConfigParser(common_namespace)
+        common_config = common_parser.read_configuration(silent=True)
+        config.update(common_config)
+
+        namespace = os.environ.get('EDUID_CONFIG_NS', f'/eduid/{ns}/{app_name}/')
+        parser = EtcdConfigParser(namespace)
+        # Load optional app specific settings
+        app_config = parser.read_configuration(silent=True)
+        config.update(app_config)
+
+        # Load optional app specific secrets
+        secrets_path = os.environ.get('LOCAL_CFG_FILE')
+        if secrets_path is not None and os.path.exists(secrets_path):
+            spec = importlib.util.spec_from_file_location("secret.settings", secrets_path)
+            secret_settings_module = importlib.util.module_from_spec(spec)
+            for secret in dir(secret_settings_module):
+                if not secret.startswith('_'):
+                    config[secret.lower()] = getattr(secret_settings_module, secret)
 
         # Make sure we don't try to load config keys that are not expected as that will result in a crash
         filtered_config = cls.filter_config(config)
@@ -303,6 +329,12 @@ class BaseConfig(CommonConfig):
         filtered_keys = set(filtered_config.keys())
         if config_keys != filtered_keys:
             logger.warning(f'Keys removed before config loading: {config_keys - filtered_keys}')
+
+        # Save config to a file in /dev/shm for introspection
+        fd_int = os.open(f'/dev/shm/{app_name}_config.yaml', os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with open(fd_int, 'w') as fd:
+            fd.write('---\n')
+            yaml.safe_dump(filtered_config, fd)
 
         return cls(**filtered_config)
 
@@ -314,10 +346,11 @@ class FlaskConfig(BaseConfig):
     with the default values provided by flask.
     See the flask documentation for the semantics of each key.
     """
+
     # What environment the app is running in.
     # This is set by the FLASK_ENV environment variable and may not
     # behave as expected if set in code
-    env : str = 'production'
+    env: str = 'production'
     testing: bool = False
     # explicitly enable or disable the propagation of exceptions.
     # If not set or explicitly set to None this is implicitly true if either

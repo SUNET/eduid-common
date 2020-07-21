@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import math
-from zxcvbn import zxcvbn
+
 from marshmallow import Schema, ValidationError
+from zxcvbn import zxcvbn
 
 __author__ = 'lundberg'
 
 
 class PasswordSchema(Schema):
-
     class Meta:
         zxcvbn_terms = None
         min_entropy = None
@@ -18,7 +18,7 @@ class PasswordSchema(Schema):
         self.Meta.min_entropy = kwargs.pop('min_entropy')
         super(PasswordSchema, self).__init__(*args, **kwargs)
 
-    def validate_password(self, password):
+    def validate_password(self, password, **kwargs):
         """
         :param password: New password
         :type password: string_types

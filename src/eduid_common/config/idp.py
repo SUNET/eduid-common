@@ -35,9 +35,7 @@ Configuration (file) handling for eduID IdP.
 """
 
 from dataclasses import dataclass, field
-import os
-from importlib import import_module
-from typing import Optional, List, Tuple, Dict, Any
+from typing import List, Optional, Tuple
 
 from .base import BaseConfig
 
@@ -47,10 +45,17 @@ class IdPConfig(BaseConfig):
     """
     Configuration for the IdP
     """
+
     app_name: str = 'idp'
     # session cookie
     session_cookie_persistent: bool = True
     session_cookie_locking: str = 'explicit'
+    session_cookie_domain: Optional[str] = None
+    session_cookie_name: str = 'sessid'
+    session_cookie_secure: bool = False
+    session_cookie_path: str = '/'
+    session_cookie_httponly: bool = False
+    session_cookie_samesite: Optional[str] = 'Strict'
     # Logging
     log_level: str = 'INFO'
     # IdP specific
@@ -108,7 +113,7 @@ class IdPConfig(BaseConfig):
     verify_request_signatures: bool = False
     # Get list of usernames valid for use with the /status URL.
     # If this list is ['*'], all usernames are allowed for /status.
-    status_test_usernames: List[str] =  field(default_factory=list)
+    status_test_usernames: List[str] = field(default_factory=list)
     # URL (string) for use in simple templating of login.html.
     signup_link: str = '#'
     # URL (string) for use in simple templating of forbidden.html.
@@ -158,16 +163,11 @@ class IdPConfig(BaseConfig):
     tou_reaccept_interval: int = 94608000
     # Name of cookie used to persist session information in the users browser.
     shared_session_cookie_name: str = 'sessid'
-    session_cookie_timeout: int = 60      # in minutes
+    session_cookie_timeout: int = 60  # in minutes
     # Key to decrypt shared sessions.
     shared_session_secret_key: Optional[str] = None
     secret_key: Optional[str] = None
     preferred_url_scheme: str = 'http'
-    session_cookie_domain: Optional[str] = None
-    session_cookie_name: str = 'sessid'
-    session_cookie_secure: bool = False
-    session_cookie_path: str = '/'
-    session_cookie_httponly: bool = False
     # TTL for shared sessions.
     shared_session_ttl: int = 300
     http_headers: str = "Content-Security-Policy:default-src 'self'; script-src 'self' 'unsafe-inline', X-Frame-Options:DENY"
@@ -176,4 +176,5 @@ class IdPConfig(BaseConfig):
     supported_digest_algorithms: List[str] = field(default_factory=lambda: ['http://www.w3.org/2001/04/xmlenc#sha256'])
     # List in order of preference
     supported_signing_algorithms: List[str] = field(
-        default_factory=lambda: ['http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'])
+        default_factory=lambda: ['http://www.w3.org/2001/04/xmldsig-more#rsa-sha256']
+    )

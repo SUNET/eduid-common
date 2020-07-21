@@ -1,3 +1,17 @@
+from __future__ import annotations
+
+import pprint
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
+from html import escape
+from typing import Dict, Mapping, Optional, Type
+from urllib.parse import urlencode
+
+from eduid_userdb.credentials import Credential
+
+from eduid_common.authn.idp_saml import IdP_SAMLRequest
+from eduid_common.session.namespaces import SessionNSBase
+
 #
 # Copyright (c) 2013, 2014, 2016 NORDUnet A/S. All rights reserved.
 # Copyright 2012 Roland Hedberg. All rights reserved.
@@ -8,23 +22,13 @@
 #          Roland Hedberg
 #
 
-import pprint
-from datetime import datetime
-from html import escape, unescape
-from dataclasses import dataclass, field, asdict
-from typing import Dict, Optional
-from urllib.parse import urlencode
-
-from eduid_common.session.namespaces import SessionNSBase
-from eduid_common.authn.idp_saml import IdP_SAMLRequest
-from eduid_userdb.credentials import Credential
-
 
 @dataclass
 class ExternalMfaData(object):
     """
     Data about a successful external authentication as a multi factor.
     """
+
     issuer: str
     authn_context: str
     timestamp: datetime
@@ -53,6 +57,7 @@ class SSOLoginData(SessionNSBase):
                       message to the user to make them aware of the reason they got
                       back to the IdP login page.
     """
+
     key: str
     SAMLRequest: str
     binding: str
@@ -73,32 +78,33 @@ class SSOLoginData(SessionNSBase):
         self.RelayState = escape(self.RelayState, quote=True)
         self.SAMLRequest = escape(self.SAMLRequest, quote=True)
         self.binding = escape(self.binding, quote=True)
-        qs = {
-            'SAMLRequest': self.SAMLRequest,
-            'RelayState': self.RelayState
-        }
+        qs = {'SAMLRequest': self.SAMLRequest, 'RelayState': self.RelayState}
         self.query_string = urlencode(qs)
 
-    def to_dict(self):
-        return {'key': unescape(self.key),
-                'SAMLRequest': self.saml_req.request,
-                'RelayState': unescape(self.RelayState),
-                'binding': self.saml_req.binding,
-                'FailCount': self.FailCount,
-                }
+    def to_dict(self) -> Dict[str, str]:
+        return {
+            'key': self.key,
+            'SAMLRequest': self.SAMLRequest,
+            'RelayState': self.RelayState,
+            'binding': self.binding,
+            'FailCount': str(self.FailCount),
+        }
 
     @classmethod
-    def from_dict(cls, data):
-        key = escape(data['key'])
-        SAMLRequest = escape(data['SAMLRequest'])
-        RelayState = escape(data['RelayState'])
-        binding = escape(data['binding'])
-        FailCount = data['FailCount']
+    def from_dict(cls: Type[SSOLoginData], data: Mapping[str, str]) -> SSOLoginData:
+        key = data['key']
+        SAMLRequest = data['SAMLRequest']
+        RelayState = data['RelayState']
+        binding = data['binding']
+        FailCount = int(data['FailCount'])
         return cls(key, SAMLRequest, binding, RelayState, FailCount)
 
-    def __str__(self):
-        data = self.to_dict()
+    def __str__(self) -> str:
+        try:
+            data = self.to_dict()
+        except AttributeError:
+            return f'<Unprintable SSOLoginData: key={self.key}>'
         if 'SAMLRequest' in data:
-            data['SAMLRequest length'] = len(data['SAMLRequest'])
+            data['SAMLRequest length'] = str(len(data['SAMLRequest']))
             del data['SAMLRequest']
         return pprint.pformat(data)

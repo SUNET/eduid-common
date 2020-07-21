@@ -2,10 +2,10 @@
 
 import logging
 from functools import wraps
-from typing import Optional, Mapping
-
-from nacl import secret, encoding, exceptions
 from string import Template
+from typing import Mapping, Optional
+
+from nacl import encoding, exceptions, secret
 
 from eduid_common.config.parsers.exceptions import SecretKeyException
 
@@ -68,8 +68,9 @@ def decrypt_config(config_dict: Mapping) -> Mapping:
                         continue  # Try next key
                 try:
                     encrypted_value = bytes(encrypted_value, 'ascii')
-                    decrypted_value = boxes[key_name].decrypt(encrypted_value,
-                                                              encoder=encoding.URLSafeBase64Encoder).decode('utf-8')
+                    decrypted_value = (
+                        boxes[key_name].decrypt(encrypted_value, encoder=encoding.URLSafeBase64Encoder).decode('utf-8')
+                    )
                     new_config_dict[key[:-10]] = decrypted_value
                     decrypted = True
                     break  # Decryption successful, do not try any more keys
@@ -129,7 +130,7 @@ def interpolate_config(config_dict: dict, sub_dict: Optional[dict] = None) -> di
         sub_dict = config_dict
     # XXX case insensitive substitution - transitioning to lc config
     ci_config_dict = {}
-    for k,v in config_dict.items():
+    for k, v in config_dict.items():
         ci_config_dict[k] = v
         ci_config_dict[k.upper()] = v
     for key, value in sub_dict.items():

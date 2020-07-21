@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
-from flask import request
-
-from eduid_common.authn.middleware import AuthnBaseApp
 from eduid_common.api.testing import EduidAPITestCase
+from eduid_common.authn.middleware import AuthnBaseApp
 from eduid_common.authn.utils import no_authn_views
 from eduid_common.config.base import FlaskConfig
 from eduid_common.session import session
@@ -14,8 +12,14 @@ from eduid_common.session.namespaces import LoginApplication
 __author__ = 'lundberg'
 
 
+class SessionTestApp(AuthnBaseApp):
+    def __init__(self, name: str, config: Dict[str, Any], **kwargs):
+        self.config = FlaskConfig.init_config(ns='webapp', app_name=name, test_config=config)
+        super().__init__(name, **kwargs)
+
+
 def session_init_app(name, config):
-    app = AuthnBaseApp(name, FlaskConfig, config, init_central_userdb=False)
+    app = SessionTestApp(name, config, init_central_userdb=False)
     app = no_authn_views(app, ['/unauthenticated'])
 
     @app.route('/authenticated')
@@ -47,16 +51,26 @@ def session_init_app(name, config):
         session.mfa_action.authn_context = 'http://id.elegnamnden.se/loa/1.0/loa3'
         return 'Hello, World!'
 
+    @app.route('/reset-password')
+    def reset_password():
+        session.reset_password.generated_password_hash = 'password-hash'
+        return 'Hello, World!'
+
+    @app.route('/signup')
+    def signup():
+        session.signup.email_verification_code = 'email-verification-code'
+        return 'Hello, World!'
+
     return app
 
 
 class EduidSessionTests(EduidAPITestCase):
-
-
-    def setUp(self, users: Optional[List[str]] = None,
-              copy_user_to_private: bool = False,
-              am_settings: Optional[Dict[str, Any]] = None
-              ):
+    def setUp(
+        self,
+        users: Optional[List[str]] = None,
+        copy_user_to_private: bool = False,
+        am_settings: Optional[Dict[str, Any]] = None,
+    ):
         self.test_user_eppn = 'hubba-bubba'
         super().setUp(users=users, copy_user_to_private=copy_user_to_private, am_settings=am_settings)
 
@@ -68,11 +82,9 @@ class EduidSessionTests(EduidAPITestCase):
         return session_init_app('testing', config)
 
     def update_config(self, config):
-        config.update({
-            'debug': True,
-            'log_level': 'DEBUG',
-            'no_authn_urls': [],
-        })
+        config.update(
+            {'debug': True, 'log_level': 'DEBUG', 'no_authn_urls': [],}
+        )
         return config
 
     def test_session_authenticated(self):
@@ -125,6 +137,20 @@ class EduidSessionTests(EduidAPITestCase):
                 self.assertEqual(sess.mfa_action.issuer, 'https://issuer-entity-id.example.com')
                 self.assertEqual(sess.mfa_action.authn_instant, '2019-03-21T16:26:17Z')
                 self.assertEqual(sess.mfa_action.authn_context, 'http://id.elegnamnden.se/loa/1.0/loa3')
+
+    def test_session_reset_password(self):
+        with self.session_cookie(self.browser, self.test_user_eppn) as browser:
+            response = browser.get('/reset-password')
+            self.assertEqual(response.status_code, 200)
+            with browser.session_transaction() as sess:
+                self.assertEqual(sess.reset_password.generated_password_hash, 'password-hash')
+
+    def test_session_signup(self):
+        with self.session_cookie(self.browser, self.test_user_eppn) as browser:
+            response = browser.get('/signup')
+            self.assertEqual(response.status_code, 200)
+            with browser.session_transaction() as sess:
+                self.assertEqual(sess.signup.email_verification_code, 'email-verification-code')
 
     def test_clear_session_mfa_action(self):
         with self.session_cookie(self.browser, self.test_user_eppn) as browser:

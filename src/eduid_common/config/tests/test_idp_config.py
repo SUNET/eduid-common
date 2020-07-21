@@ -37,22 +37,14 @@
 Test config parsing.
 """
 
-import os
 import unittest
-import pkg_resources
 
 from eduid_common.config.idp import IdPConfig
 
-
-TEST_CONFIG = {
-        'listen_port': 8000,
-        'static_dir': '/home/ft/work/NORDUnet/eduid-IdP/static/',
-        'vccs_url': 'dummy'
-        }
+TEST_CONFIG = {'listen_port': 8000, 'static_dir': '/home/ft/work/NORDUnet/eduid-IdP/static/', 'vccs_url': 'dummy'}
 
 
 class TestCredStore(unittest.TestCase):
-
     def setUp(self):
         self.config = IdPConfig(**TEST_CONFIG)
 

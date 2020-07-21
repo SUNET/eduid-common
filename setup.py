@@ -1,12 +1,13 @@
 from setuptools import setup, find_packages
 
 
-version = '0.4.8'
+version = '0.7.4'
+
 
 requires = [
     'six >= 1.11.0',
     'setuptools >= 2.2',
-    'eduid-userdb >= 0.4.8',
+    'eduid-userdb >= 0.4.18',
 ]
 
 # Flavours
@@ -19,13 +20,15 @@ webapp_requires = [
     'PyNaCl >= 1.0.1',
     'python-etcd >= 0.4.5',
     'PyYAML >= 3.11',
-    'bleach>=2.0.0',
-    'marshmallow>=2.15.1,==2.*',
+    'bleach>=3.1.3',
+    'marshmallow>=3.0,==3.*',
     'Flask-Mail == 0.9.1',
     'eduid_msg >= 0.10.9',
     'eduid-am >= 0.7.3',
     'statsd==3.2.1',
     'zxcvbn>=4.4.27,<5.0',
+    'python-u2flib-server>=5.0.0',
+    'fido2==0.6.0',
 ]
 webapp_extras = webapp_requires + []
 
@@ -34,8 +37,9 @@ idp_requires = [
     'redis >= 2.10.5',
     'vccs_client >= 0.4.2',
     'PyNaCl >= 1.0.1',
+    'PyYAML >= 3.11',
     'statsd==3.2.1',
-    'bleach>=2.0.0',
+    'bleach>=3.1.3',
     'Flask>=0.12.2,==0.12.*',
     'pwgen == 0.4',
     'python-etcd >= 0.4.5',
@@ -45,8 +49,10 @@ idp_extras = idp_requires + []
 worker_requires = [
     'python-etcd >= 0.4.5',
     'PyNaCl >= 1.0.1',
+    'PyYAML >= 3.11',
     ]
 worker_extras = worker_requires + []
+api_extras = worker_extras
 
 # No dependecies flavor, let the importing application handle dependencies
 nodeps_requires = requires
@@ -84,6 +90,7 @@ setup(name='eduid-common',
           'webapp': webapp_extras,
           'idp': idp_extras,
           'worker': worker_extras,
+          'api': api_extras,
           'nodeps': []
       },
       entry_points="""
