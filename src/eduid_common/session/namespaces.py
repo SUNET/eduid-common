@@ -2,14 +2,15 @@
 
 from abc import ABC
 from copy import deepcopy
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum, unique
-from typing import Optional
+from typing import Optional, Dict, List
 
 __author__ = 'ft'
 
 
+@dataclass
 class SessionNSBase(ABC):
     def to_dict(self):
         return asdict(self)
@@ -76,16 +77,6 @@ class ExpiringData(SessionNSBase):
 
 
 @dataclass()
-class LoginRequest(ExpiringData):
-    return_endpoint_url: str
-    require_mfa: bool = False
-    force_authn: bool = False
-    verified_credentials: List[SessionAuthnData] = field(default_factory=list)
-    eppn: Optional[str] = None
-    sso_session_public_id: Optional[str] = None
-
-
-@dataclass()
 class SessionAuthnData:
     cred_id: str
     authn_ts: datetime
@@ -101,10 +92,20 @@ class SessionAuthnData:
 
 
 @dataclass()
+class LoginRequest(ExpiringData):
+    return_endpoint_url: str
+    require_mfa: bool = False
+    force_authn: bool = False
+    verified_credentials: List[SessionAuthnData] = field(default_factory=list)
+    eppn: Optional[str] = None
+    sso_session_public_id: Optional[str] = None
+
+
+@dataclass()
 class LoginResponse(ExpiringData):
     public_sso_session_id: str
     credentials_used: List[SessionAuthnData] = field(default_factory=list)
-    mfa_action_external: Optional[ExternalMfaData] = field(default=None)
+    mfa_action_external: Optional['ExternalMfaData'] = field(default=None)
 
     @classmethod
     def from_dict(cls, data):
@@ -145,14 +146,14 @@ class TimestampedNS(SessionNSBase):
     def to_dict(self):
         res = super(TimestampedNS, self).to_dict()
         if res.get('ts') is not None:
-            res['ts'] = str(int(res['ts'].timestamp()))
+            res['ts'] = res['ts'].isoformat()
         return res
 
     @classmethod
     def from_dict(cls, data):
         _data = deepcopy(data)  # do not modify callers data
         if _data.get('ts') is not None:
-            _data['ts'] = datetime.isoformat(_data['ts'])
+            _data['ts'] = datetime.fromisoformat(_data['ts'])
         return cls(**_data)
 
 
