@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import logging
 import logging.config
+from dataclasses import dataclass, asdict, replace
+
 import time
 from os import environ
 from pprint import PrettyPrinter
 from typing import TYPE_CHECKING
+
 
 from eduid_common.config.exceptions import BadConfiguration
 from eduid_common.session import session
@@ -29,6 +32,14 @@ eppn - Available if a user session is initiated
 """
 
 DEFAULT_FORMAT = '%(asctime)s | %(levelname)s | %(hostname)s | %(name)s | %(module)s | %(eppn)s | %(message)s'
+
+
+@dataclass(frozen=True)
+class LocalContext:
+    level: str
+    format: str
+    app_name: str
+    app_debug: bool
 
 
 # Default to RFC3339/ISO 8601 with tz
@@ -115,25 +126,25 @@ def init_logging(app: EduIDBaseApp) -> None:
     Merges optional dictConfig from settings before initializing.
     """
     try:
-        local_context = {
-            'level': app.config.setdefault('log_level', 'INFO'),
-            'format': app.config.setdefault('log_format', DEFAULT_FORMAT),
-            'app_name': app.name,
-            'app_debug': app.debug,
-        }
-    except (KeyError, AttributeError) as e:
+        local_context = LocalContext(
+            level=app.config.setdefault('log_level', 'INFO'),
+            format=app.config.setdefault('log_format', DEFAULT_FORMAT),
+            app_name=app.name,
+            app_debug=app.debug,
+        )
+    except (KeyError, AttributeError, TypeError) as e:
         raise BadConfiguration(message=f'Could not initialize logging local_context. {type(e).__name__}: {e}')
 
     if app.debug:
         # Flask expects to be able to debug log in debug mode
-        local_context['level'] = 'DEBUG'
+        local_context = replace(local_context, level='DEBUG')
 
     settings_config = app.config.logging_config
     base_config = {
         'version': 1,
         'disable_existing_loggers': False,
         # Local variables
-        'local_context': local_context,
+        'local_context': asdict(local_context),
         'formatters': {
             'default': {'()': 'eduid_common.api.logging.EduidFormatter', 'fmt': 'cfg://local_context.format'},
         },
