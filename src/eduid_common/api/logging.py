@@ -156,7 +156,7 @@ def init_logging(app: EduIDBaseApp) -> None:
     local_context = make_local_context(app)
     logging_config = make_dictConfig(local_context)
 
-    logging_config = merge_config(logging_config, app.config.logging_config)
+    logging_config = merge_config(logging_config, app.conf.logging_config)
 
     logging.config.dictConfig(logging_config)
     if app.debug:
@@ -198,18 +198,18 @@ def make_local_context(app: EduIDBaseApp) -> LocalContext:
 
     To provide typing and order, we keep them in a neat dataclass.
     """
-    log_format = app.config.log_format
+    log_format = app.conf.log_format
     if not log_format:
         log_format = DEFAULT_FORMAT
 
-    log_level = app.config.log_level
+    log_level = app.conf.log_level
     if app.debug:
         # Flask expects to be able to debug log in debug mode
         log_level = 'DEBUG'
 
     filters = [LoggingFilters.NAMES, LoggingFilters.SESSION_USER]
 
-    relative_time = app.config.testing
+    relative_time = app.conf.testing
 
     try:
         local_context = LocalContext(
@@ -217,7 +217,7 @@ def make_local_context(app: EduIDBaseApp) -> LocalContext:
             format=log_format,
             app_name=app.name,
             app_debug=app.debug,
-            debug_eppns=app.config.debug_eppns,
+            debug_eppns=app.conf.debug_eppns,
             filters=filters,
             relative_time=relative_time,
         )

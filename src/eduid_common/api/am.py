@@ -1,29 +1,19 @@
 # -*- coding: utf-8 -*-
+from typing import Union
 
-import eduid_am
 from flask import current_app
 
+import eduid_am
+from eduid_common.api.exceptions import AmTaskFailed
+from eduid_common.config.base import CeleryConfigXX, CeleryConfig2
 from eduid_userdb import User
 from eduid_userdb.exceptions import LockedIdentityViolation
-
-from eduid_common.api.app import EduIDBaseApp
-from eduid_common.api.exceptions import AmTaskFailed
-from eduid_common.config.base import CeleryConfig
 
 __author__ = 'lundberg'
 
 
-def init_relay(app: EduIDBaseApp, application_name: str) -> None:
-    """
-    :param app: Flask app
-    :param application_name: Name to help am find the entry point for the am plugin
-    """
-    app.am_relay = AmRelay(app.config.celery_config, application_name)
-    return None
-
-
 class AmRelay(object):
-    def __init__(self, config: CeleryConfig, relay_for: str):
+    def __init__(self, config: CeleryConfig2, relay_for: str):
         """
         :param config: celery config
         :param relay_for: Name of application to relay for
@@ -79,3 +69,11 @@ class AmRelay(object):
         except Exception as e:
             rtask.forget()
             raise AmTaskFailed(f'ping task failed: {repr(e)}')
+
+
+def init_relay(config: Union[CeleryConfigXX, CeleryConfig2], application_name: str) -> AmRelay:
+    """
+    :param config: Celery configuration parameters
+    :param application_name: Name to help am find the entry point for the am plugin
+    """
+    return AmRelay(config, application_name)

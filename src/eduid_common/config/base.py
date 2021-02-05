@@ -39,7 +39,7 @@ from __future__ import annotations
 import logging
 import os
 import pprint
-from dataclasses import dataclass, field, fields
+from dataclasses import asdict, dataclass, field, fields
 from enum import Enum
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Type, TypeVar
 
@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class CeleryConfig:
+class CeleryConfigXX:
     """
     Celery configuration
     """
@@ -111,6 +111,14 @@ class RedisConfig(object):
     sentinel_service_name: Optional[str] = None
 
 
+class RedisConfig2(BaseModel):
+    port: int = 6379
+    db: int = 0
+    host: Optional[str] = None
+    sentinel_hosts: Optional[Sequence[str]] = None
+    sentinel_service_name: Optional[str] = None
+
+
 @dataclass(frozen=True)
 class CookieConfig(object):
     key: str
@@ -141,16 +149,6 @@ class EduidEnvironment(str, Enum):
     production = 'production'
 
 
-class EduIDBaseAppConfig(RootConfig):
-    available_languages: Mapping[str, str] = PydanticField(default={'en': 'English', 'sv': 'Svenska'})
-    environment: EduidEnvironment = EduidEnvironment.production
-    mongo_uri: str
-    # Allow list of URLs that do not need authentication. Unauthenticated requests
-    # for these URLs will be served, rather than redirected to the authn service.
-    # The list is a list of regex that are matched against the path of the
-    # requested URL ex. ^/test$.
-    no_authn_urls: list = PydanticField(default=['^/status/healthy$', '^/status/sanity-check$'])
-
 
 @dataclass
 class CommonConfig:
@@ -162,8 +160,8 @@ class CommonConfig:
     # mongo uri
     mongo_uri: Optional[str] = None
     # Celery config -- duplicated for backwards compat
-    celery_config: CeleryConfig = field(default_factory=CeleryConfig)
-    celery: CeleryConfig = field(default_factory=CeleryConfig)
+    celery_config: CeleryConfigXX = field(default_factory=CeleryConfigXX)
+    celery: CeleryConfigXX = field(default_factory=CeleryConfigXX)
     audit: bool = False
     transaction_audit: bool = False
     validation_url: str = ''
@@ -437,8 +435,7 @@ class BaseConfig(CommonConfig):
         return cls(**filtered_config)
 
 
-@dataclass
-class FlaskConfig(BaseConfig):
+class FlaskConfig(BaseModel):
     """
     These are configuration keys used by Flask (and flask-babel) itself,
     with the default values provided by flask.
@@ -476,7 +473,7 @@ class FlaskConfig(BaseConfig):
     # the name of the session cookie
     session_cookie_name: str = 'sessid'
     # Sets a cookie with legacy SameSite=None, the SameSite key and value is omitted
-    cookies_samesite_compat: list = field(default_factory=lambda: [('sessid', 'sessid_samesite_compat')])
+    cookies_samesite_compat: list = PydanticField(default=[('sessid', 'sessid_samesite_compat')])
     # the domain for the session cookie. If this is not set, the cookie will
     # be valid for all subdomains of SERVER_NAME.
     session_cookie_domain: Optional[str] = None
@@ -544,6 +541,9 @@ class FlaskConfig(BaseConfig):
     recaptcha_public_key: str = ''
     recaptcha_private_key: str = ''
 
+    def to_mapping(self) -> Mapping[str, Any]:
+        return self.dict()
+
 
 @dataclass
 class WebauthnConfigMixin:
@@ -568,3 +568,36 @@ class MagicCookieMixin(BaseModel):
 
 class CeleryConfigMixin(BaseModel):
     celery: CeleryConfig2
+
+
+class LoggingMixin(BaseModel):
+    # If this list contains anything, debug logging will only be performed for these users
+    debug_eppns: Sequence[str] = PydanticField(default=[])
+    log_format: str = '{asctime} | {levelname:7} | {hostname} | {eppn:9} | {name:35} | {module:10} | {message}'
+    log_level: str = 'INFO'
+    logging_config: dict = PydanticField(default={})
+
+
+class StatsConfigMixin(BaseModel):
+    app_name: str
+    stats_host: Optional[str] = None
+    stats_port: int = 8125
+
+
+class RedisConfigMixin(BaseModel):
+    redis_config: RedisConfig2 = PydanticField(default=RedisConfig2())
+
+
+
+class EduIDBaseAppConfig(RootConfig, LoggingMixin, StatsConfigMixin, RedisConfigMixin):
+    available_languages: Mapping[str, str] = PydanticField(default={'en': 'English', 'sv': 'Svenska'})
+    environment: EduidEnvironment = EduidEnvironment.production
+    flask: FlaskConfig = PydanticField(default=FlaskConfig())
+    mongo_uri: str
+    # Allow list of URLs that do not need authentication. Unauthenticated requests
+    # for these URLs will be served, rather than redirected to the authn service.
+    # The list is a list of regex that are matched against the path of the
+    # requested URL ex. ^/test$.
+    no_authn_urls: list = PydanticField(default=['^/status/healthy$', '^/status/sanity-check$'])
+    # All AuthnBaseApps need this to redirect not-logged-in requests to the authn service
+    token_service_url: str

@@ -122,8 +122,8 @@ def no_authn_views(app: 'EduIDBaseApp', paths: Sequence[str]):
         app_root = ''
     for path in paths:
         no_auth_regex = '^{!s}$'.format(urlappend(app_root, path))
-        if no_auth_regex not in app.config['NO_AUTHN_URLS']:
-            app.config['NO_AUTHN_URLS'].append(no_auth_regex)
+        if no_auth_regex not in app.conf.no_authn_urls:
+            app.conf.no_authn_urls.append(no_auth_regex)
     return app
 
 

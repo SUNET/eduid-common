@@ -80,9 +80,9 @@ class CommonTestCase(MongoTestCase):
                 mongo_uri = self.tmp_db.uri
         else:
             am_settings = {}
-        am_settings['celery'] = celery_settings
-        self.am_settings = AmConfig(**am_settings)
-        self.am_settings.mongo_uri = mongo_uri
+        #am_settings['celery'] = celery_settings
+        #self.am_settings = AmConfig(**am_settings)
+        #self.am_settings.mongo_uri = mongo_uri
         # Set up etcd
         self.etcd_instance = EtcdTemporaryInstance.get_instance()
         os.environ.update({'ETCD_PORT': str(self.etcd_instance.port)})
