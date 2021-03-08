@@ -141,9 +141,9 @@ cryptography==3.4.6 \
     #   pyopenssl
     #   pysaml2
     #   python-u2flib-server
-defusedxml==0.7.0 \
-    --hash=sha256:86b15d9e3c639de79f4cb38aeffea3281f62aff78dde7d798e1352c63bfa6ea0 \
-    --hash=sha256:a290cad10346ed366c8a0133d868eaf6585ec6afdd0c511286cdb11f5fc3d285
+defusedxml==0.7.1 \
+    --hash=sha256:1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69 \
+    --hash=sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61
     # via pysaml2
 dnspython==2.1.0 \
     --hash=sha256:95d12f6ef0317118d2a1a6fc49aac65ffec7eb8087474158f42f26a639135216 \
@@ -162,9 +162,9 @@ eduid-common[worker]==0.32.1 \
     # via
     #   eduid-am
     #   eduid-msg
-eduid-msg==0.11.1 \
-    --hash=sha256:9f069727c45a8129cca6e3728862e99082b3558ca94a4cee13700462122d9885 \
-    --hash=sha256:c8a32664780eb5e5ebb222ac9629405e7470ae7a470fbe46a65de284236501df
+eduid-msg==0.11.2 \
+    --hash=sha256:5c6aea55907a149d670a39c48b49606863f78c2d32ba45ef46583259ca49c3b9 \
+    --hash=sha256:d7f8263b2392fbd2d2ddd60834f91a833267b1da6fbcef0159b74bc4d16962d2
     # via -r webapp_requirements.in
 eduid-userdb==0.11.1 \
     --hash=sha256:50903e186b2ed05168fd0b52fbc346205c39ccc6fecfc5040ba5c3fa5be8915f \
