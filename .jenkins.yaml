@@ -1,3 +1,4 @@
+disabled: true
 publish_over_ssh:
   - pypi.sunet.se
 upstream:
