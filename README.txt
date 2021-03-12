@@ -1,3 +1,5 @@
+Moved to https://github.com/SUNET/eduid-backend.
+
 .. contents::
 
 Introduction
